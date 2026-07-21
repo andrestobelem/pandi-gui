@@ -105,12 +105,33 @@ export class PiAgentEngine implements AgentEngine {
 }
 
 async function createPiSession(workspace: string): Promise<PiSessionPort> {
-  const { createAgentSession, SessionManager } = await import(
-    "@earendil-works/pi-coding-agent"
-  );
-  const { session } = await createAgentSession({
+  const {
+    createAgentSession,
+    DefaultResourceLoader,
+    getAgentDir,
+    SessionManager,
+    SettingsManager,
+  } = await import("@earendil-works/pi-coding-agent");
+  const agentDir = getAgentDir();
+  const settingsManager = SettingsManager.create(workspace, agentDir);
+  const resourceLoader = new DefaultResourceLoader({
+    agentDir,
     cwd: workspace,
+    noExtensions: true,
+    noPromptTemplates: true,
+    noSkills: true,
+    noThemes: true,
+    settingsManager,
+  });
+  await resourceLoader.reload();
+
+  const { session } = await createAgentSession({
+    agentDir,
+    cwd: workspace,
+    noTools: "all",
+    resourceLoader,
     sessionManager: SessionManager.create(workspace),
+    settingsManager,
   });
 
   return {
