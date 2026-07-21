@@ -28,7 +28,7 @@ The current directory becomes the agent workspace. To exercise the UI without mo
 PANDI_AGENT_ENGINE=deterministic npm start
 ```
 
-Enter a prompt and observe the response as streamed deltas. Use **Cancel** or press **Escape** to abort an active response.
+Enter a prompt and observe the response as streamed deltas. Use **Cancel** or press **Escape** to abort an active response. When Pandi starts again in the same Workspace, it restores its latest Session and Transcript; Pandi sessions are stored separately from sessions created with the Pi CLI.
 
 ## Markdown artifacts
 
@@ -57,8 +57,9 @@ Real-Pi smoke checks remain manual:
 
 1. Start the default application, submit `Reply exactly PANDI_SMOKE and do not use tools`, and observe `PANDI_SMOKE` in the Transcript.
 2. Submit `Use the read tool to read package.json, then tell me the package name.` Observe a `read` Tool Activity card transition from **Running** to **Completed**, with the requested path as input and file content as its result, followed by the Coding Agent Response.
+3. Submit `Remember the marker PANDI_SESSION_SMOKE and reply READY.`, wait for the Run to settle, quit Pandi, and restart it from the same Workspace. Observe the restored Prompt and Response, then submit `What marker did I ask you to remember?` and verify that the Coding Agent replies `PANDI_SESSION_SMOKE`.
 
-The real Pi Session exposes only the built-in `read` tool: extensions, bash and mutating tools remain disabled. These checks verify the packaged renderer, preload, Electron IPC, utility process, Pi Session, read execution and model stream together.
+The real Pi Session exposes only the built-in `read` tool: extensions, bash and mutating tools remain disabled. These checks verify the packaged renderer, preload, Electron IPC, utility process, Pi Session persistence, read execution and model stream together.
 
 ## Architecture
 

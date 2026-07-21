@@ -1,12 +1,16 @@
+import { join } from "node:path";
 import {
   AGENT_TOOL_ID_MAX_LENGTH,
   AGENT_TOOL_NAME_MAX_LENGTH,
   AGENT_TOOL_TEXT_MAX_LENGTH,
   type AgentHostEvent,
+  type TranscriptRun,
 } from "../protocol/agent-protocol";
 import type { AgentEngine, AgentEventListener } from "./agent-engine";
+import { continueWorkspaceSession } from "./workspace-session";
 
 export interface PiSessionPort {
+  activeBranch(): unknown[];
   subscribe(listener: (event: unknown) => void): () => void;
   prompt(text: string): Promise<void>;
   abort(): Promise<void>;
@@ -33,6 +37,10 @@ export class PiAgentEngine implements AgentEngine {
   subscribe(listener: AgentEventListener): () => void {
     this.#listeners.add(listener);
     return () => this.#listeners.delete(listener);
+  }
+
+  async restore(): Promise<TranscriptRun[]> {
+    return restoredTranscript((await this.#session()).activeBranch());
   }
 
   async prompt(text: string): Promise<void> {
@@ -142,6 +150,136 @@ export class PiAgentEngine implements AgentEngine {
   }
 }
 
+function restoredTranscript(entries: unknown[]): TranscriptRun[] {
+  const runs: TranscriptRun[] = [];
+  const pendingTools = new Map<TranscriptRun, Set<string>>();
+  let currentRun: TranscriptRun | undefined;
+
+  for (const entry of entries) {
+    if (!isRecord(entry) || entry.type !== "message") continue;
+    const message = entry.message;
+    if (!isRecord(message) || typeof message.role !== "string") continue;
+
+    if (message.role === "user") {
+      currentRun = {
+        prompt: messageContentText(message.content),
+        items: [],
+        status: "failed",
+        error: "Run did not settle before Pandi stopped",
+      };
+      runs.push(currentRun);
+      pendingTools.set(currentRun, new Set());
+      continue;
+    }
+
+    if (!currentRun) continue;
+
+    if (message.role === "assistant" && Array.isArray(message.content)) {
+      for (const content of message.content) {
+        if (!isRecord(content) || typeof content.type !== "string") continue;
+        if (content.type === "text" && typeof content.text === "string") {
+          appendRestoredResponse(currentRun, content.text);
+        } else if (
+          content.type === "toolCall" &&
+          typeof content.id === "string" &&
+          typeof content.name === "string"
+        ) {
+          const id = boundedToolIdentifier(
+            content.id,
+            AGENT_TOOL_ID_MAX_LENGTH,
+          );
+          currentRun.items.push({
+            type: "tool",
+            id,
+            name: boundedToolIdentifier(
+              content.name,
+              AGENT_TOOL_NAME_MAX_LENGTH,
+            ),
+            input: toolInputText(content.arguments),
+            result: "Tool execution did not complete",
+            isError: true,
+          });
+          pendingTools.get(currentRun)?.add(id);
+        }
+      }
+      if (message.stopReason === "error") {
+        currentRun.status = "failed";
+        currentRun.error =
+          typeof message.errorMessage === "string"
+            ? message.errorMessage
+            : "Coding Agent failed";
+      } else if (
+        message.stopReason === "stop" ||
+        message.stopReason === "length" ||
+        message.stopReason === "aborted"
+      ) {
+        currentRun.status = "settled";
+        currentRun.error = undefined;
+      }
+      continue;
+    }
+
+    if (
+      message.role === "toolResult" &&
+      typeof message.toolCallId === "string" &&
+      typeof message.isError === "boolean"
+    ) {
+      const completedId = completeRestoredTool(currentRun, message);
+      if (completedId) pendingTools.get(currentRun)?.delete(completedId);
+    }
+  }
+
+  for (const [run, pendingIds] of pendingTools) {
+    if (pendingIds.size > 0) {
+      run.status = "failed";
+      run.error ??= "Run did not settle before Pandi stopped";
+    }
+  }
+
+  return runs;
+}
+
+function messageContentText(content: unknown): string {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+
+  return content
+    .filter(
+      (item): item is Record<string, unknown> =>
+        isRecord(item) && item.type === "text" && typeof item.text === "string",
+    )
+    .map((item) => String(item.text))
+    .join("\n");
+}
+
+function appendRestoredResponse(run: TranscriptRun, text: string): void {
+  const latest = run.items.at(-1);
+  if (latest?.type === "response") {
+    latest.text += text;
+    return;
+  }
+  run.items.push({ type: "response", text });
+}
+
+function completeRestoredTool(
+  run: TranscriptRun,
+  message: Record<string, unknown>,
+): string | undefined {
+  const toolCallId = boundedToolIdentifier(
+    String(message.toolCallId),
+    AGENT_TOOL_ID_MAX_LENGTH,
+  );
+  for (let index = run.items.length - 1; index >= 0; index -= 1) {
+    const item = run.items[index];
+    if (item?.type === "tool" && item.id === toolCallId) {
+      item.result = toolResultText({ content: message.content });
+      item.isError = message.isError === true;
+      return toolCallId;
+    }
+  }
+  return undefined;
+}
+
 function boundedToolIdentifier(text: string, maxLength: number): string {
   return text.slice(0, maxLength);
 }
@@ -193,7 +331,6 @@ async function createPiSession(workspace: string): Promise<PiSessionPort> {
     createAgentSession,
     DefaultResourceLoader,
     getAgentDir,
-    SessionManager,
     SettingsManager,
   } = await import("@earendil-works/pi-coding-agent");
   const agentDir = getAgentDir();
@@ -214,11 +351,17 @@ async function createPiSession(workspace: string): Promise<PiSessionPort> {
     cwd: workspace,
     tools: ["read"],
     resourceLoader,
-    sessionManager: SessionManager.create(workspace),
+    sessionManager: continueWorkspaceSession(
+      workspace,
+      process.env.PANDI_SESSION_ROOT ?? join(agentDir, "pandi-sessions"),
+    ),
     settingsManager,
   });
 
   return {
+    activeBranch() {
+      return session.sessionManager.getBranch();
+    },
     subscribe(listener) {
       return session.subscribe((event) => listener(event));
     },

@@ -27,6 +27,7 @@ afterEach(cleanup);
 describe("Workspace Session", () => {
   it("orients the Developer before the first Prompt", async () => {
     window.pandi = {
+      restore: vi.fn(),
       prompt: vi.fn(),
       abort: vi.fn(),
       subscribe: () => () => {},
@@ -46,10 +47,78 @@ describe("Workspace Session", () => {
     expect(await screen.findAllByText("pandi-gui")).toHaveLength(2);
   });
 
+  it("restores the latest Session Transcript on startup", () => {
+    const restore = vi.fn();
+    let receive: (event: AgentHostEvent) => void = () => {};
+    window.pandi = {
+      restore,
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+    render(<App />);
+
+    expect(restore).toHaveBeenCalledOnce();
+    fireEvent.change(screen.getByLabelText("Prompt"), {
+      target: { value: "Do not race restoration" },
+    });
+    const send = screen.getByRole("button", { name: "Send" });
+    expect((send as HTMLButtonElement).disabled).toBe(true);
+
+    act(() => {
+      receive({
+        version: 1,
+        type: "session.restored",
+        runs: [
+          {
+            prompt: "Inspect README.md",
+            status: "settled",
+            items: [
+              { type: "response", text: "I'll inspect it." },
+              {
+                type: "tool",
+                id: "read-1",
+                name: "read",
+                input: '{"path":"README.md"}',
+                result: "# Pandi GUI",
+                isError: false,
+              },
+              { type: "response", text: "The package is Pandi GUI." },
+            ],
+          },
+        ],
+      });
+    });
+
+    const transcript = screen.getByRole("region", { name: "Transcript" });
+    const text = transcript.textContent ?? "";
+    expect(text.indexOf("Inspect README.md")).toBeLessThan(
+      text.indexOf("I'll inspect it."),
+    );
+    expect(text.indexOf("I'll inspect it.")).toBeLessThan(
+      text.indexOf('{"path":"README.md"}'),
+    );
+    expect(text.indexOf("# Pandi GUI")).toBeLessThan(
+      text.indexOf("The package is Pandi GUI."),
+    );
+    expect(within(transcript).getByText("Completed")).toBeTruthy();
+    expect((send as HTMLButtonElement).disabled).toBe(false);
+    expect(
+      screen.queryByRole("heading", { name: "What should we build?" }),
+    ).toBeNull();
+  });
+
   it("submits a Prompt and renders a streamed Response", () => {
     const prompt = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      restore() {
+        receive({ version: 1, type: "session.restored", runs: [] });
+      },
       prompt,
       abort: vi.fn(),
       workspace: async () => ({ version: 1, name: "pandi-gui" }),
@@ -78,6 +147,9 @@ describe("Workspace Session", () => {
   it("renders running and completed read Tool Activity", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      restore() {
+        receive({ version: 1, type: "session.restored", runs: [] });
+      },
       prompt: vi.fn(),
       abort: vi.fn(),
       workspace: async () => ({ version: 1, name: "pandi-gui" }),
@@ -147,6 +219,9 @@ describe("Workspace Session", () => {
   it("renders failed read Tool Activity distinctly", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      restore() {
+        receive({ version: 1, type: "session.restored", runs: [] });
+      },
       prompt: vi.fn(),
       abort: vi.fn(),
       workspace: async () => ({ version: 1, name: "pandi-gui" }),
@@ -191,6 +266,9 @@ describe("Workspace Session", () => {
   it("preserves every Run and scrolls to the latest Response", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      restore() {
+        receive({ version: 1, type: "session.restored", runs: [] });
+      },
       prompt: vi.fn(),
       abort: vi.fn(),
       workspace: async () => ({ version: 1, name: "pandi-gui" }),
@@ -239,6 +317,9 @@ describe("Workspace Session", () => {
     const abort = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      restore() {
+        receive({ version: 1, type: "session.restored", runs: [] });
+      },
       prompt: vi.fn(),
       abort,
       workspace: async () => ({ version: 1, name: "pandi-gui" }),

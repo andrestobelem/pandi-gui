@@ -1,3 +1,4 @@
+import type { TranscriptRun } from "../protocol/agent-protocol";
 import type { AgentEngine, AgentEventListener } from "./agent-engine";
 
 export class DeterministicAgentEngine implements AgentEngine {
@@ -12,6 +13,10 @@ export class DeterministicAgentEngine implements AgentEngine {
   subscribe(listener: AgentEventListener): () => void {
     this.#listeners.add(listener);
     return () => this.#listeners.delete(listener);
+  }
+
+  async restore(): Promise<TranscriptRun[]> {
+    return [];
   }
 
   async prompt(text: string): Promise<void> {

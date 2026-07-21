@@ -16,9 +16,40 @@ const agentHostCommandSchema = z.discriminatedUnion("type", [
     version: z.literal(1),
     type: z.literal("abort"),
   }),
+  z.object({
+    version: z.literal(1),
+    type: z.literal("session.restore"),
+  }),
 ]);
 
+const transcriptItemSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("response"),
+    text: z.string(),
+  }),
+  z.object({
+    type: z.literal("tool"),
+    id: z.string().min(1).max(AGENT_TOOL_ID_MAX_LENGTH),
+    name: z.string().min(1).max(AGENT_TOOL_NAME_MAX_LENGTH),
+    input: z.string().max(AGENT_TOOL_TEXT_MAX_LENGTH),
+    result: z.string().max(AGENT_TOOL_TEXT_MAX_LENGTH),
+    isError: z.boolean(),
+  }),
+]);
+
+const transcriptRunSchema = z.object({
+  prompt: z.string(),
+  items: z.array(transcriptItemSchema),
+  status: z.enum(["settled", "failed"]),
+  error: z.string().optional(),
+});
+
 const agentHostEventSchema = z.discriminatedUnion("type", [
+  z.object({
+    version: z.literal(1),
+    type: z.literal("session.restored"),
+    runs: z.array(transcriptRunSchema),
+  }),
   z.object({
     version: z.literal(1),
     type: z.literal("agent.started"),
@@ -55,6 +86,8 @@ const agentHostEventSchema = z.discriminatedUnion("type", [
 ]);
 
 export type AgentHostCommand = z.infer<typeof agentHostCommandSchema>;
+export type TranscriptItem = z.infer<typeof transcriptItemSchema>;
+export type TranscriptRun = z.infer<typeof transcriptRunSchema>;
 export type AgentHostEvent = z.infer<typeof agentHostEventSchema>;
 
 export function parseAgentHostCommand(value: unknown): AgentHostCommand {

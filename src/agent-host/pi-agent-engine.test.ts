@@ -9,10 +9,167 @@ import {
 import { PiAgentEngine, type PiSessionPort } from "./pi-agent-engine";
 
 describe("Pi agent engine adapter", () => {
+  it("restores the active Pi Session branch and continues its context", async () => {
+    const prompts: string[] = [];
+    let sessionCreations = 0;
+    const session: PiSessionPort = {
+      activeBranch() {
+        return [
+          {
+            type: "message",
+            id: "user-1",
+            message: { role: "user", content: "Inspect README.md" },
+          },
+          {
+            type: "message",
+            id: "assistant-1",
+            message: {
+              role: "assistant",
+              content: [
+                { type: "text", text: "I'll inspect it." },
+                {
+                  type: "toolCall",
+                  id: "read-1",
+                  name: "read",
+                  arguments: { path: "README.md" },
+                },
+              ],
+              stopReason: "toolUse",
+            },
+          },
+          {
+            type: "message",
+            id: "result-1",
+            message: {
+              role: "toolResult",
+              toolCallId: "read-1",
+              toolName: "read",
+              content: [{ type: "text", text: "# Pandi GUI" }],
+              isError: false,
+            },
+          },
+          {
+            type: "message",
+            id: "assistant-2",
+            message: {
+              role: "assistant",
+              content: [{ type: "text", text: "The package is Pandi GUI." }],
+              stopReason: "stop",
+            },
+          },
+        ];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt(text) {
+        prompts.push(text);
+      },
+      async abort() {},
+      dispose() {},
+    };
+    const engine = new PiAgentEngine("/workspace", async () => {
+      sessionCreations += 1;
+      return session;
+    });
+
+    expect(await engine.restore()).toEqual([
+      {
+        prompt: "Inspect README.md",
+        status: "settled",
+        items: [
+          { type: "response", text: "I'll inspect it." },
+          {
+            type: "tool",
+            id: "read-1",
+            name: "read",
+            input: '{"path":"README.md"}',
+            result: "# Pandi GUI",
+            isError: false,
+          },
+          { type: "response", text: "The package is Pandi GUI." },
+        ],
+      },
+    ]);
+
+    await engine.prompt("What is its version?");
+    expect(prompts).toEqual(["What is its version?"]);
+    expect(sessionCreations).toBe(1);
+  });
+
+  it("restores an interrupted historical Run as failed", async () => {
+    const session: PiSessionPort = {
+      activeBranch() {
+        return [
+          {
+            type: "message",
+            id: "user-1",
+            message: { role: "user", content: "Read README.md" },
+          },
+          {
+            type: "message",
+            id: "assistant-1",
+            message: {
+              role: "assistant",
+              content: [
+                {
+                  type: "toolCall",
+                  id: "read-1",
+                  name: "read",
+                  arguments: { path: "README.md" },
+                },
+              ],
+              stopReason: "toolUse",
+            },
+          },
+          {
+            type: "message",
+            id: "user-2",
+            message: { role: "user", content: "What happened?" },
+          },
+        ];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt() {},
+      async abort() {},
+      dispose() {},
+    };
+    const engine = new PiAgentEngine("/workspace", async () => session);
+
+    expect(await engine.restore()).toEqual([
+      {
+        prompt: "Read README.md",
+        status: "failed",
+        error: "Run did not settle before Pandi stopped",
+        items: [
+          {
+            type: "tool",
+            id: "read-1",
+            name: "read",
+            input: '{"path":"README.md"}',
+            result: "Tool execution did not complete",
+            isError: true,
+          },
+        ],
+      },
+      {
+        prompt: "What happened?",
+        status: "failed",
+        error: "Run did not settle before Pandi stopped",
+        items: [],
+      },
+    ]);
+  });
+
   it("translates Pi session events into the application contract", async () => {
     const prompts: string[] = [];
     let listener: (event: unknown) => void = () => {};
     const session: PiSessionPort = {
+      activeBranch() {
+        return [];
+      },
       subscribe(nextListener) {
         listener = nextListener;
         return () => {};
@@ -77,6 +234,9 @@ describe("Pi agent engine adapter", () => {
     const oversizedName = "n".repeat(AGENT_TOOL_NAME_MAX_LENGTH + 1);
     const oversizedText = "x".repeat(AGENT_TOOL_TEXT_MAX_LENGTH + 1);
     const session: PiSessionPort = {
+      activeBranch() {
+        return [];
+      },
       subscribe(nextListener) {
         listener = nextListener;
         return () => {};

@@ -44,10 +44,17 @@ function createWindow(): BrowserWindow {
   return window;
 }
 
-function startAgentHost(workspace: string): UtilityProcess {
+function startAgentHost(
+  workspace: string,
+  sessionStorageRoot: string,
+): UtilityProcess {
   const child = utilityProcess.fork(path.join(__dirname, "agent-host.js"), [], {
     cwd: workspace,
-    env: { ...process.env, PANDI_WORKSPACE: workspace },
+    env: {
+      ...process.env,
+      PANDI_SESSION_ROOT: sessionStorageRoot,
+      PANDI_WORKSPACE: workspace,
+    },
     serviceName: "Pandi Agent Host",
     stdio: "pipe",
   });
@@ -78,7 +85,8 @@ function startAgentHost(workspace: string): UtilityProcess {
 
 app.whenReady().then(() => {
   const workspace = process.env.PANDI_WORKSPACE ?? process.cwd();
-  agentHost = startAgentHost(workspace);
+  const sessionStorageRoot = path.join(app.getPath("userData"), "sessions");
+  agentHost = startAgentHost(workspace, sessionStorageRoot);
   mainWindow = createWindow();
 
   ipcMain.handle(WORKSPACE_INFO_CHANNEL, () => ({

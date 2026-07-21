@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import type { TranscriptRun as RestoredRun } from "../protocol/agent-protocol";
 import "../protocol/pandi-api";
 
 type IconName = "agent" | "arrow" | "code" | "folder" | "review" | "spark";
@@ -23,6 +24,27 @@ type TranscriptRun = {
   status: "running" | "settled" | "failed";
   error?: string;
 };
+
+function restoreRuns(runs: RestoredRun[]): TranscriptRun[] {
+  return runs.map((run, runIndex) => ({
+    id: runIndex + 1,
+    prompt: run.prompt,
+    status: run.status,
+    error: run.error,
+    items: run.items.map((item, itemIndex) =>
+      item.type === "response"
+        ? { ...item, id: itemIndex }
+        : {
+            type: "tool",
+            id: item.id,
+            name: item.name,
+            input: item.input,
+            status: item.isError ? "failed" : "completed",
+            result: item.result,
+          },
+    ),
+  }));
+}
 
 function updateLatestRun(
   runs: TranscriptRun[],
@@ -138,6 +160,7 @@ export function App() {
   const [input, setInput] = useState("");
   const [workspaceName, setWorkspaceName] = useState("Current Workspace");
   const [runs, setRuns] = useState<TranscriptRun[]>([]);
+  const [isRestoring, setIsRestoring] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
 
@@ -155,77 +178,84 @@ export function App() {
     };
   }, []);
 
-  useEffect(
-    () =>
-      window.pandi.subscribe((event) => {
-        switch (event.type) {
-          case "agent.started":
-            setRuns((current) =>
-              updateLatestRun(current, (run) => ({
-                ...run,
-                items: [],
-                status: "running",
-                error: undefined,
-              })),
-            );
-            setIsRunning(true);
-            break;
-          case "message.delta":
-            setRuns((current) =>
-              updateLatestRun(current, (run) => ({
-                ...run,
-                items: appendResponseDelta(run.items, event.text),
-              })),
-            );
-            break;
-          case "tool.started":
-            setRuns((current) =>
-              updateLatestRun(current, (run) => ({
-                ...run,
-                items: [
-                  ...run.items,
-                  {
-                    type: "tool",
-                    id: event.id,
-                    name: event.name,
-                    input: event.input,
-                    status: "running",
-                  },
-                ],
-              })),
-            );
-            break;
-          case "tool.completed":
-            setRuns((current) =>
-              updateLatestRun(current, (run) => ({
-                ...run,
-                items: completeToolActivity(run.items, event),
-              })),
-            );
-            break;
-          case "agent.failed":
-            setRuns((current) =>
-              updateLatestRun(current, (run) => ({
-                ...run,
-                status: "failed",
-                error: event.message,
-              })),
-            );
-            setIsRunning(false);
-            break;
-          case "agent.settled":
-            setRuns((current) =>
-              updateLatestRun(current, (run) => ({
-                ...run,
-                status: run.status === "failed" ? "failed" : "settled",
-              })),
-            );
-            setIsRunning(false);
-            break;
-        }
-      }),
-    [],
-  );
+  useEffect(() => {
+    const unsubscribe = window.pandi.subscribe((event) => {
+      switch (event.type) {
+        case "session.restored":
+          setRuns(restoreRuns(event.runs));
+          setIsRestoring(false);
+          setIsRunning(false);
+          break;
+        case "agent.started":
+          setIsRestoring(false);
+          setRuns((current) =>
+            updateLatestRun(current, (run) => ({
+              ...run,
+              items: [],
+              status: "running",
+              error: undefined,
+            })),
+          );
+          setIsRunning(true);
+          break;
+        case "message.delta":
+          setRuns((current) =>
+            updateLatestRun(current, (run) => ({
+              ...run,
+              items: appendResponseDelta(run.items, event.text),
+            })),
+          );
+          break;
+        case "tool.started":
+          setRuns((current) =>
+            updateLatestRun(current, (run) => ({
+              ...run,
+              items: [
+                ...run.items,
+                {
+                  type: "tool",
+                  id: event.id,
+                  name: event.name,
+                  input: event.input,
+                  status: "running",
+                },
+              ],
+            })),
+          );
+          break;
+        case "tool.completed":
+          setRuns((current) =>
+            updateLatestRun(current, (run) => ({
+              ...run,
+              items: completeToolActivity(run.items, event),
+            })),
+          );
+          break;
+        case "agent.failed":
+          setIsRestoring(false);
+          setRuns((current) =>
+            updateLatestRun(current, (run) => ({
+              ...run,
+              status: "failed",
+              error: event.message,
+            })),
+          );
+          setIsRunning(false);
+          break;
+        case "agent.settled":
+          setRuns((current) =>
+            updateLatestRun(current, (run) => ({
+              ...run,
+              status: run.status === "failed" ? "failed" : "settled",
+            })),
+          );
+          setIsRunning(false);
+          break;
+      }
+    });
+    window.pandi.restore();
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -245,7 +275,7 @@ export function App() {
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const prompt = input.trim();
-    if (!prompt || isRunning) return;
+    if (!prompt || isRestoring || isRunning) return;
 
     setRuns((current) => [
       ...current,
@@ -452,7 +482,9 @@ export function App() {
                 <button
                   aria-label="Send"
                   className="send-button"
-                  disabled={isRunning || input.trim().length === 0}
+                  disabled={
+                    isRestoring || isRunning || input.trim().length === 0
+                  }
                   type="submit"
                 >
                   <Icon name="arrow" />

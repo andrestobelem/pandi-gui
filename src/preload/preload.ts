@@ -11,6 +11,12 @@ import {
 } from "../protocol/pandi-api";
 
 const api: PandiApi = {
+  restore() {
+    ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
+      version: 1,
+      type: "session.restore",
+    });
+  },
   prompt(text) {
     ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
       version: 1,

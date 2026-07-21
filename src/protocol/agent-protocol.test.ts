@@ -18,6 +18,37 @@ describe("agent host wire protocol", () => {
     expect(parseAgentHostCommand(command)).toEqual(command);
   });
 
+  it("accepts Session restoration across the wire", () => {
+    const command = { version: 1, type: "session.restore" };
+    const event = {
+      version: 1,
+      type: "session.restored",
+      runs: [
+        {
+          prompt: "Inspect README.md",
+          status: "settled",
+          items: [
+            { type: "response", text: "I'll inspect it." },
+            {
+              type: "tool",
+              id: "read-1",
+              name: "read",
+              input: '{"path":"README.md"}',
+              result: "# Pandi GUI",
+              isError: false,
+            },
+            { type: "response", text: "The package is Pandi GUI." },
+          ],
+        },
+      ],
+    };
+
+    expect(parseAgentHostCommand(command)).toEqual(command);
+    expect(parseAgentHostEvent(JSON.parse(JSON.stringify(event)))).toEqual(
+      event,
+    );
+  });
+
   it("accepts an agent started event", () => {
     const event = { version: 1, type: "agent.started" };
 

@@ -9,7 +9,7 @@ export class AgentHostController {
 
   constructor(
     private readonly engine: AgentEngine,
-    publish: (event: AgentHostEvent) => void,
+    private readonly publish: (event: AgentHostEvent) => void,
   ) {
     this.#unsubscribe = engine.subscribe(publish);
   }
@@ -22,7 +22,16 @@ export class AgentHostController {
       return;
     }
 
-    await this.engine.abort();
+    if (command.type === "abort") {
+      await this.engine.abort();
+      return;
+    }
+
+    this.publish({
+      version: 1,
+      type: "session.restored",
+      runs: await this.engine.restore(),
+    });
   }
 
   async dispose(): Promise<void> {
