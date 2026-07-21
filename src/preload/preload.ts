@@ -4,7 +4,11 @@ import {
   AGENT_EVENT_CHANNEL,
   parseAgentHostEvent,
 } from "../protocol/agent-protocol";
-import type { PandiApi } from "../protocol/pandi-api";
+import {
+  type PandiApi,
+  parseWorkspaceInfo,
+  WORKSPACE_INFO_CHANNEL,
+} from "../protocol/pandi-api";
 
 const api: PandiApi = {
   prompt(text) {
@@ -23,6 +27,9 @@ const api: PandiApi = {
     };
     ipcRenderer.on(AGENT_EVENT_CHANNEL, receive);
     return () => ipcRenderer.removeListener(AGENT_EVENT_CHANNEL, receive);
+  },
+  async workspace() {
+    return parseWorkspaceInfo(await ipcRenderer.invoke(WORKSPACE_INFO_CHANNEL));
   },
 };
 

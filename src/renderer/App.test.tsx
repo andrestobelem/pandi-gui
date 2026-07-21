@@ -13,13 +13,35 @@ import { App } from "./App";
 
 afterEach(cleanup);
 
-describe("agent conversation", () => {
-  it("submits a prompt and renders streamed text", () => {
+describe("Workspace Session", () => {
+  it("orients the Developer before the first Prompt", async () => {
+    window.pandi = {
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      subscribe: () => () => {},
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+    };
+
+    render(<App />);
+
+    expect(
+      screen.getByRole("complementary", { name: "Workspace" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Transcript" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "What should we build?" }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("Prompt")).toBeTruthy();
+    expect(await screen.findAllByText("pandi-gui")).toHaveLength(2);
+  });
+
+  it("submits a Prompt and renders a streamed Response", () => {
     const prompt = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       prompt,
       abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
       subscribe(listener) {
         receive = listener;
         return () => {};
@@ -42,12 +64,13 @@ describe("agent conversation", () => {
     expect(screen.getByText("Hi there")).toBeTruthy();
   });
 
-  it("can cancel immediately and settles when the host confirms it", () => {
+  it("lets the Developer cancel a Run before it settles", () => {
     const abort = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       prompt: vi.fn(),
       abort,
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
       subscribe(listener) {
         receive = listener;
         return () => {};

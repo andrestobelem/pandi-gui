@@ -12,6 +12,7 @@ import {
   parseAgentHostCommand,
   parseAgentHostEvent,
 } from "../protocol/agent-protocol";
+import { WORKSPACE_INFO_CHANNEL } from "../protocol/pandi-api";
 
 let mainWindow: BrowserWindow | undefined;
 let agentHost: UtilityProcess | undefined;
@@ -23,7 +24,7 @@ function createWindow(): BrowserWindow {
     height: 760,
     minWidth: 720,
     minHeight: 560,
-    backgroundColor: "#101419",
+    backgroundColor: "#f6f7fa",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -43,8 +44,7 @@ function createWindow(): BrowserWindow {
   return window;
 }
 
-function startAgentHost(): UtilityProcess {
-  const workspace = process.env.PANDI_WORKSPACE ?? process.cwd();
+function startAgentHost(workspace: string): UtilityProcess {
   const child = utilityProcess.fork(path.join(__dirname, "agent-host.js"), [], {
     cwd: workspace,
     env: { ...process.env, PANDI_WORKSPACE: workspace },
@@ -77,9 +77,14 @@ function startAgentHost(): UtilityProcess {
 }
 
 app.whenReady().then(() => {
-  agentHost = startAgentHost();
+  const workspace = process.env.PANDI_WORKSPACE ?? process.cwd();
+  agentHost = startAgentHost(workspace);
   mainWindow = createWindow();
 
+  ipcMain.handle(WORKSPACE_INFO_CHANNEL, () => ({
+    version: 1,
+    name: path.basename(workspace) || workspace,
+  }));
   ipcMain.on(AGENT_COMMAND_CHANNEL, (_event, value: unknown) => {
     agentHost?.postMessage(parseAgentHostCommand(value));
   });
