@@ -48,7 +48,10 @@ export function App() {
     if (!prompt || isRunning) return;
 
     setUserMessage(prompt);
+    setAssistantMessage("");
+    setError("");
     setInput("");
+    setIsRunning(true);
     window.pandi.prompt(prompt);
   }
 

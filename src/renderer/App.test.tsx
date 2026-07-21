@@ -42,7 +42,7 @@ describe("agent conversation", () => {
     expect(screen.getByText("Hi there")).toBeTruthy();
   });
 
-  it("aborts an active response when the user presses Escape", () => {
+  it("can cancel immediately and settles when the host confirms it", () => {
     const abort = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
@@ -55,9 +55,17 @@ describe("agent conversation", () => {
     };
     render(<App />);
 
-    act(() => receive({ version: 1, type: "agent.started" }));
-    fireEvent.keyDown(window, { key: "Escape" });
+    fireEvent.change(screen.getByLabelText("Prompt"), {
+      target: { value: "Wait for me" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    fireEvent.keyDown(window, { key: "Escape" });
     expect(abort).toHaveBeenCalledOnce();
+
+    act(() => receive({ version: 1, type: "agent.settled" }));
+    expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(screen.queryByText("Thinking…")).toBeNull();
   });
 });
