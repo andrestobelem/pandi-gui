@@ -349,9 +349,19 @@ svg {
 
 .messages {
   display: grid;
-  gap: 1.5rem;
+  gap: 2rem;
   width: min(100%, 50rem);
   margin: 0 auto;
+}
+
+.transcript-run {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.transcript-run + .transcript-run {
+  padding-top: 2rem;
+  border-top: 1px solid #e2e4ea;
 }
 
 .message {

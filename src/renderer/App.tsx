@@ -1,7 +1,25 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import "../protocol/pandi-api";
 
 type IconName = "agent" | "arrow" | "code" | "folder" | "review" | "spark";
+
+type TranscriptRun = {
+  id: number;
+  prompt: string;
+  response: string;
+  status: "running" | "settled" | "failed";
+  error?: string;
+};
+
+function updateLatestRun(
+  runs: TranscriptRun[],
+  update: (run: TranscriptRun) => TranscriptRun,
+): TranscriptRun[] {
+  const latest = runs.at(-1);
+  if (!latest) return runs;
+
+  return [...runs.slice(0, -1), update(latest)];
+}
 
 function Icon({ name }: { name: IconName }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -42,10 +60,9 @@ function Icon({ name }: { name: IconName }) {
 export function App() {
   const [input, setInput] = useState("");
   const [workspaceName, setWorkspaceName] = useState("Current Workspace");
-  const [promptText, setPromptText] = useState("");
-  const [responseText, setResponseText] = useState("");
-  const [error, setError] = useState("");
+  const [runs, setRuns] = useState<TranscriptRun[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const transcriptEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,18 +83,41 @@ export function App() {
       window.pandi.subscribe((event) => {
         switch (event.type) {
           case "agent.started":
-            setResponseText("");
-            setError("");
+            setRuns((current) =>
+              updateLatestRun(current, (run) => ({
+                ...run,
+                response: "",
+                status: "running",
+                error: undefined,
+              })),
+            );
             setIsRunning(true);
             break;
           case "message.delta":
-            setResponseText((current) => current + event.text);
+            setRuns((current) =>
+              updateLatestRun(current, (run) => ({
+                ...run,
+                response: run.response + event.text,
+              })),
+            );
             break;
           case "agent.failed":
-            setError(event.message);
+            setRuns((current) =>
+              updateLatestRun(current, (run) => ({
+                ...run,
+                status: "failed",
+                error: event.message,
+              })),
+            );
             setIsRunning(false);
             break;
           case "agent.settled":
+            setRuns((current) =>
+              updateLatestRun(current, (run) => ({
+                ...run,
+                status: run.status === "failed" ? "failed" : "settled",
+              })),
+            );
             setIsRunning(false);
             break;
         }
@@ -95,22 +135,31 @@ export function App() {
     return () => window.removeEventListener("keydown", abortOnEscape);
   }, [isRunning]);
 
+  useEffect(() => {
+    if (runs.length === 0) return;
+    transcriptEnd.current?.scrollIntoView({ block: "end" });
+  }, [runs]);
+
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const prompt = input.trim();
     if (!prompt || isRunning) return;
 
-    setPromptText(prompt);
-    setResponseText("");
-    setError("");
+    setRuns((current) => [
+      ...current,
+      {
+        id: (current.at(-1)?.id ?? 0) + 1,
+        prompt,
+        response: "",
+        status: "running",
+      },
+    ]);
     setInput("");
     setIsRunning(true);
     window.pandi.prompt(prompt);
   }
 
-  const hasTranscript = Boolean(
-    promptText || responseText || isRunning || error,
-  );
+  const hasTranscript = runs.length > 0;
 
   return (
     <div className="app-shell">
@@ -210,31 +259,37 @@ export function App() {
 
           {hasTranscript && (
             <div className="messages">
-              {promptText && (
-                <article className="message developer-message">
-                  <div className="message-author">
-                    <span className="avatar developer-avatar">D</span>
-                    <strong>Developer</strong>
-                  </div>
-                  <p>{promptText}</p>
-                </article>
-              )}
-              {(responseText || isRunning) && (
-                <article aria-live="polite" className="message agent-message">
-                  <div className="message-author">
-                    <span className="avatar agent-avatar">
-                      <Icon name="agent" />
-                    </span>
-                    <strong>Coding Agent</strong>
-                  </div>
-                  <p>{responseText || "Thinking…"}</p>
-                </article>
-              )}
-              {error && (
-                <p className="error-message" role="alert">
-                  {error}
-                </p>
-              )}
+              {runs.map((run) => (
+                <div className="transcript-run" key={run.id}>
+                  <article className="message developer-message">
+                    <div className="message-author">
+                      <span className="avatar developer-avatar">D</span>
+                      <strong>Developer</strong>
+                    </div>
+                    <p>{run.prompt}</p>
+                  </article>
+                  {(run.response || run.status === "running") && (
+                    <article
+                      aria-live={run.status === "running" ? "polite" : "off"}
+                      className="message agent-message"
+                    >
+                      <div className="message-author">
+                        <span className="avatar agent-avatar">
+                          <Icon name="agent" />
+                        </span>
+                        <strong>Coding Agent</strong>
+                      </div>
+                      <p>{run.response || "Thinking…"}</p>
+                    </article>
+                  )}
+                  {run.error && (
+                    <p className="error-message" role="alert">
+                      {run.error}
+                    </p>
+                  )}
+                </div>
+              ))}
+              <div aria-hidden="true" ref={transcriptEnd} />
             </div>
           )}
         </section>

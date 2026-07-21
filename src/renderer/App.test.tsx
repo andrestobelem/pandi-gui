@@ -7,9 +7,19 @@ import {
   render,
   screen,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AgentHostEvent } from "../protocol/agent-protocol";
 import { App } from "./App";
+
+const scrollIntoView = vi.fn();
+
+beforeEach(() => {
+  scrollIntoView.mockClear();
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: scrollIntoView,
+  });
+});
 
 afterEach(cleanup);
 
@@ -62,6 +72,53 @@ describe("Workspace Session", () => {
 
     expect(prompt).toHaveBeenCalledWith("Hello");
     expect(screen.getByText("Hi there")).toBeTruthy();
+  });
+
+  it("preserves every Run and scrolls to the latest Response", () => {
+    let receive: (event: AgentHostEvent) => void = () => {};
+    window.pandi = {
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Prompt"), {
+      target: { value: "First Prompt" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    act(() => {
+      receive({ version: 1, type: "agent.started" });
+      receive({ version: 1, type: "message.delta", text: "First Response" });
+      receive({ version: 1, type: "agent.settled" });
+    });
+
+    fireEvent.change(screen.getByLabelText("Prompt"), {
+      target: { value: "Second Prompt" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    act(() => {
+      receive({ version: 1, type: "agent.started" });
+      receive({ version: 1, type: "message.delta", text: "Second Response" });
+      receive({ version: 1, type: "agent.settled" });
+    });
+
+    const transcript = screen.getByRole("region", { name: "Transcript" });
+    const text = transcript.textContent ?? "";
+    expect(text.indexOf("First Prompt")).toBeLessThan(
+      text.indexOf("First Response"),
+    );
+    expect(text.indexOf("First Response")).toBeLessThan(
+      text.indexOf("Second Prompt"),
+    );
+    expect(text.indexOf("Second Prompt")).toBeLessThan(
+      text.indexOf("Second Response"),
+    );
+    expect(scrollIntoView).toHaveBeenCalled();
   });
 
   it("lets the Developer cancel a Run before it settles", () => {
