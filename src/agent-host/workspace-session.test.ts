@@ -54,6 +54,7 @@ describe("Pandi Workspace Session storage", () => {
     persistProbe(cliSession, "Pi CLI");
 
     const firstPandiSession = continueWorkspaceSession(
+      SessionManager,
       workspaceA,
       join(root, "pandi"),
     );
@@ -61,6 +62,7 @@ describe("Pandi Workspace Session storage", () => {
     persistProbe(firstPandiSession, "Pandi");
 
     const restoredPandiSession = continueWorkspaceSession(
+      SessionManager,
       workspaceA,
       join(root, "pandi"),
     );
@@ -73,6 +75,7 @@ describe("Pandi Workspace Session storage", () => {
     );
 
     const otherWorkspaceSession = continueWorkspaceSession(
+      SessionManager,
       workspaceB,
       join(root, "pandi"),
     );

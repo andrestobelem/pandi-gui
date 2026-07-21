@@ -1,16 +1,20 @@
 import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
-import { SessionManager } from "@earendil-works/pi-coding-agent";
 
-export function continueWorkspaceSession(
+interface SessionManagerFactory<T> {
+  continueRecent(workspace: string, sessionDirectory: string): T;
+}
+
+export function continueWorkspaceSession<T>(
+  sessionManager: SessionManagerFactory<T>,
   workspace: string,
   storageRoot: string,
-): SessionManager {
+): T {
   const workspaceKey = createHash("sha256")
     .update(resolve(workspace))
     .digest("hex");
 
-  return SessionManager.continueRecent(
+  return sessionManager.continueRecent(
     workspace,
     join(storageRoot, workspaceKey),
   );

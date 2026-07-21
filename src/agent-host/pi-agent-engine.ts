@@ -331,6 +331,7 @@ async function createPiSession(workspace: string): Promise<PiSessionPort> {
     createAgentSession,
     DefaultResourceLoader,
     getAgentDir,
+    SessionManager,
     SettingsManager,
   } = await import("@earendil-works/pi-coding-agent");
   const agentDir = getAgentDir();
@@ -352,6 +353,7 @@ async function createPiSession(workspace: string): Promise<PiSessionPort> {
     tools: ["read"],
     resourceLoader,
     sessionManager: continueWorkspaceSession(
+      SessionManager,
       workspace,
       process.env.PANDI_SESSION_ROOT ?? join(agentDir, "pandi-sessions"),
     ),
