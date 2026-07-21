@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo explicado de las extensiones de ejemplo de Pi</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --background: #f6f7f9;
+    --surface: #ffffff;
+    --text: #20242c;
+    --muted: #616b7a;
+    --accent: #2563eb;
+    --border: #d9dee7;
+    --code: #f0f2f5;
+    --quote: #eef4ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #111318;
+      --surface: #191c23;
+      --text: #e7eaf0;
+      --muted: #a7afbc;
+      --accent: #7aa2ff;
+      --border: #343a46;
+      --code: #101218;
+      --quote: #1b2944;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
+    font: 17px/1.7 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .document {
+    width: min(100% - 2rem, 960px);
+    margin: 2rem auto;
+    padding: clamp(1.5rem, 5vw, 4.5rem);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 8%);
+  }
+  h1, h2, h3, h4 { line-height: 1.25; scroll-margin-top: 1rem; }
+  h1 { margin-top: 0; font-size: clamp(2rem, 5vw, 3.2rem); }
+  h2 { margin-top: 2.5em; padding-bottom: .3em; border-bottom: 1px solid var(--border); }
+  h3 { margin-top: 2em; }
+  a { color: var(--accent); text-underline-offset: .18em; }
+  a:hover { text-decoration-thickness: 2px; }
+  p, li { max-width: 78ch; }
+  .table-of-contents {
+    margin: 2rem 0 3rem;
+    padding: 1rem 1.5rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 85%, var(--accent));
+  }
+  .table-of-contents h2 { margin: 0 0 .75rem; border: 0; font-size: 1.2rem; }
+  .table-of-contents ol { margin: 0; padding-left: 1.4rem; columns: 2 18rem; }
+  .table-of-contents li { break-inside: avoid; margin: .2rem 0; }
+  .table-of-contents .toc-depth-3 { margin-left: 1rem; font-size: .94em; }
+  pre {
+    overflow-x: auto;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--code);
+    font-size: .9rem;
+    line-height: 1.55;
+  }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  :not(pre) > code { padding: .15em .35em; border-radius: 5px; background: var(--code); }
+  blockquote {
+    margin-left: 0;
+    padding: .5rem 1rem;
+    border-left: 4px solid var(--accent);
+    background: var(--quote);
+    color: var(--muted);
+  }
+  table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; }
+  th, td { padding: .6rem .8rem; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--code); }
+  img { max-width: 100%; height: auto; }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 3rem 0; }
+  @media (max-width: 640px) {
+    .document { width: 100%; margin: 0; border: 0; border-radius: 0; }
+    .table-of-contents ol { columns: 1; }
+  }
+  @media print {
+    body { background: #fff; color: #000; font-size: 11pt; }
+    .document { width: 100%; margin: 0; padding: 0; border: 0; box-shadow: none; }
+    a { color: inherit; }
+    pre { white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body>
+<main class="document">
+<nav class="table-of-contents" aria-label="Table of contents">
+<h2>Contenido</h2>
+<ol>
+<li class="toc-depth-2"><a href="#alcance">Alcance</a></li>
+<li class="toc-depth-2"><a href="#como-ejecutar-un-ejemplo">Cómo ejecutar un ejemplo</a></li>
+<li class="toc-depth-2"><a href="#los-78-ejemplos">Los 78 ejemplos</a></li>
+<li class="toc-depth-3"><a href="#1-auto-commit-on-exit-ts">1. auto-commit-on-exit.ts</a></li>
+<li class="toc-depth-3"><a href="#2-bash-spawn-hook-ts">2. bash-spawn-hook.ts</a></li>
+<li class="toc-depth-3"><a href="#3-bookmark-ts">3. bookmark.ts</a></li>
+<li class="toc-depth-3"><a href="#4-border-status-editor-ts">4. border-status-editor.ts</a></li>
+<li class="toc-depth-3"><a href="#5-built-in-tool-renderer-ts">5. built-in-tool-renderer.ts</a></li>
+<li class="toc-depth-3"><a href="#6-claude-rules-ts">6. claude-rules.ts</a></li>
+<li class="toc-depth-3"><a href="#7-commands-ts">7. commands.ts</a></li>
+<li class="toc-depth-3"><a href="#8-confirm-destructive-ts">8. confirm-destructive.ts</a></li>
+<li class="toc-depth-3"><a href="#9-custom-compaction-ts">9. custom-compaction.ts</a></li>
+<li class="toc-depth-3"><a href="#10-custom-footer-ts">10. custom-footer.ts</a></li>
+<li class="toc-depth-3"><a href="#11-custom-header-ts">11. custom-header.ts</a></li>
+<li class="toc-depth-3"><a href="#12-custom-provider-anthropic">12. custom-provider-anthropic/</a></li>
+<li class="toc-depth-3"><a href="#13-custom-provider-gitlab-duo">13. custom-provider-gitlab-duo/</a></li>
+<li class="toc-depth-3"><a href="#14-dirty-repo-guard-ts">14. dirty-repo-guard.ts</a></li>
+<li class="toc-depth-3"><a href="#15-doom-overlay">15. doom-overlay/</a></li>
+<li class="toc-depth-3"><a href="#16-dynamic-resources">16. dynamic-resources/</a></li>
+<li class="toc-depth-3"><a href="#17-dynamic-tools-ts">17. dynamic-tools.ts</a></li>
+<li class="toc-depth-3"><a href="#18-entry-renderer-ts">18. entry-renderer.ts</a></li>
+<li class="toc-depth-3"><a href="#19-event-bus-ts">19. event-bus.ts</a></li>
+<li class="toc-depth-3"><a href="#20-file-trigger-ts">20. file-trigger.ts</a></li>
+<li class="toc-depth-3"><a href="#21-git-checkpoint-ts">21. git-checkpoint.ts</a></li>
+<li class="toc-depth-3"><a href="#22-git-merge-and-resolve-ts">22. git-merge-and-resolve.ts</a></li>
+<li class="toc-depth-3"><a href="#23-github-issue-autocomplete-ts">23. github-issue-autocomplete.ts</a></li>
+<li class="toc-depth-3"><a href="#24-gondolin">24. gondolin/</a></li>
+<li class="toc-depth-3"><a href="#25-handoff-ts">25. handoff.ts</a></li>
+<li class="toc-depth-3"><a href="#26-hello-ts">26. hello.ts</a></li>
+<li class="toc-depth-3"><a href="#27-hidden-thinking-label-ts">27. hidden-thinking-label.ts</a></li>
+<li class="toc-depth-3"><a href="#28-inline-bash-ts">28. inline-bash.ts</a></li>
+<li class="toc-depth-3"><a href="#29-input-transform-streaming-ts">29. input-transform-streaming.ts</a></li>
+<li class="toc-depth-3"><a href="#30-input-transform-ts">30. input-transform.ts</a></li>
+<li class="toc-depth-3"><a href="#31-interactive-shell-ts">31. interactive-shell.ts</a></li>
+<li class="toc-depth-3"><a href="#32-kimi-deferred-tools-ts">32. kimi-deferred-tools.ts</a></li>
+<li class="toc-depth-3"><a href="#33-mac-system-theme-ts">33. mac-system-theme.ts</a></li>
+<li class="toc-depth-3"><a href="#34-message-renderer-ts">34. message-renderer.ts</a></li>
+<li class="toc-depth-3"><a href="#35-minimal-mode-ts">35. minimal-mode.ts</a></li>
+<li class="toc-depth-3"><a href="#36-modal-editor-ts">36. modal-editor.ts</a></li>
+<li class="toc-depth-3"><a href="#37-model-status-ts">37. model-status.ts</a></li>
+<li class="toc-depth-3"><a href="#38-notify-ts">38. notify.ts</a></li>
+<li class="toc-depth-3"><a href="#39-overlay-qa-tests-ts">39. overlay-qa-tests.ts</a></li>
+<li class="toc-depth-3"><a href="#40-overlay-test-ts">40. overlay-test.ts</a></li>
+<li class="toc-depth-3"><a href="#41-permission-gate-ts">41. permission-gate.ts</a></li>
+<li class="toc-depth-3"><a href="#42-pirate-ts">42. pirate.ts</a></li>
+<li class="toc-depth-3"><a href="#43-plan-mode">43. plan-mode/</a></li>
+<li class="toc-depth-3"><a href="#44-preset-ts">44. preset.ts</a></li>
+<li class="toc-depth-3"><a href="#45-project-trust-ts">45. project-trust.ts</a></li>
+<li class="toc-depth-3"><a href="#46-prompt-customizer-ts">46. prompt-customizer.ts</a></li>
+<li class="toc-depth-3"><a href="#47-protected-paths-ts">47. protected-paths.ts</a></li>
+<li class="toc-depth-3"><a href="#48-provider-payload-ts">48. provider-payload.ts</a></li>
+<li class="toc-depth-3"><a href="#49-qna-ts">49. qna.ts</a></li>
+<li class="toc-depth-3"><a href="#50-question-ts">50. question.ts</a></li>
+<li class="toc-depth-3"><a href="#51-questionnaire-ts">51. questionnaire.ts</a></li>
+<li class="toc-depth-3"><a href="#52-rainbow-editor-ts">52. rainbow-editor.ts</a></li>
+<li class="toc-depth-3"><a href="#53-reload-runtime-ts">53. reload-runtime.ts</a></li>
+<li class="toc-depth-3"><a href="#54-rpc-demo-ts">54. rpc-demo.ts</a></li>
+<li class="toc-depth-3"><a href="#55-sandbox">55. sandbox/</a></li>
+<li class="toc-depth-3"><a href="#56-send-user-message-ts">56. send-user-message.ts</a></li>
+<li class="toc-depth-3"><a href="#57-session-name-ts">57. session-name.ts</a></li>
+<li class="toc-depth-3"><a href="#58-shutdown-command-ts">58. shutdown-command.ts</a></li>
+<li class="toc-depth-3"><a href="#59-snake-ts">59. snake.ts</a></li>
+<li class="toc-depth-3"><a href="#60-space-invaders-ts">60. space-invaders.ts</a></li>
+<li class="toc-depth-3"><a href="#61-ssh-ts">61. ssh.ts</a></li>
+<li class="toc-depth-3"><a href="#62-status-line-ts">62. status-line.ts</a></li>
+<li class="toc-depth-3"><a href="#63-structured-output-ts">63. structured-output.ts</a></li>
+<li class="toc-depth-3"><a href="#64-subagent">64. subagent/</a></li>
+<li class="toc-depth-3"><a href="#65-summarize-ts">65. summarize.ts</a></li>
+<li class="toc-depth-3"><a href="#66-system-prompt-header-ts">66. system-prompt-header.ts</a></li>
+<li class="toc-depth-3"><a href="#67-tic-tac-toe-ts">67. tic-tac-toe.ts</a></li>
+<li class="toc-depth-3"><a href="#68-timed-confirm-ts">68. timed-confirm.ts</a></li>
+<li class="toc-depth-3"><a href="#69-titlebar-spinner-ts">69. titlebar-spinner.ts</a></li>
+<li class="toc-depth-3"><a href="#70-todo-ts">70. todo.ts</a></li>
+<li class="toc-depth-3"><a href="#71-tool-override-ts">71. tool-override.ts</a></li>
+<li class="toc-depth-3"><a href="#72-tools-ts">72. tools.ts</a></li>
+<li class="toc-depth-3"><a href="#73-trigger-compact-ts">73. trigger-compact.ts</a></li>
+<li class="toc-depth-3"><a href="#74-truncated-tool-ts">74. truncated-tool.ts</a></li>
+<li class="toc-depth-3"><a href="#75-widget-placement-ts">75. widget-placement.ts</a></li>
+<li class="toc-depth-3"><a href="#76-with-deps">76. with-deps/</a></li>
+<li class="toc-depth-3"><a href="#77-working-indicator-ts">77. working-indicator.ts</a></li>
+<li class="toc-depth-3"><a href="#78-working-message-test-ts">78. working-message-test.ts</a></li>
+<li class="toc-depth-2"><a href="#que-ejemplos-conviene-estudiar-primero">Qué ejemplos conviene estudiar primero</a></li>
+<li class="toc-depth-2"><a href="#fuentes-primarias">Fuentes primarias</a></li>
+</ol>
+</nav>
+<h1 id="catalogo-explicado-de-las-extensiones-de-ejemplo-de-pi">Catálogo explicado de las extensiones de ejemplo de Pi</h1>
+<h2 id="alcance">Alcance</h2>
+<p>Este documento explica, uno por uno, los <strong>78 ejemplos de extensiones</strong> incluidos en <code>@earendil-works/pi-coding-agent</code> <strong>0.81.0</strong>. El relevamiento usa como fuentes primarias el código y la documentación instalados con el paquete.</p>
+<p>Los ejemplos son material didáctico: muestran una API o patrón de integración, pero no necesariamente incluyen el endurecimiento, la portabilidad o la experiencia de producto requeridos para producción. En particular, una extensión se ejecuta con los permisos completos del proceso de Pi; solo deben cargarse fuentes confiables.</p>
+<h2 id="como-ejecutar-un-ejemplo">Cómo ejecutar un ejemplo</h2>
+<p>Para probar un archivo individual:</p>
+<pre><code class="language-bash">pi --extension /ruta/al/ejemplo.ts
+# equivalente corto
+pi -e /ruta/al/ejemplo.ts
+</code></pre>
+<p>Para ejemplos organizados como paquete o directorio, se carga el directorio o su <code>index.ts</code>. Si contiene <code>package.json</code>, primero se instalan sus dependencias con <code>npm install</code> dentro del directorio.</p>
+<p>Para mantener una extensión activa y recargable, se copia a <code>~/.pi/agent/extensions/</code> o a <code>.pi/extensions/</code> dentro del Workspace y luego se usa <code>/reload</code>.</p>
+<h2 id="los-78-ejemplos">Los 78 ejemplos</h2>
+<h3 id="1-auto-commit-on-exit-ts">1. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/auto-commit-on-exit.ts"><code>auto-commit-on-exit.ts</code></a></h3>
+<p>Escucha <code>session_shutdown</code> y, si encuentra cambios, crea automáticamente un commit usando la última Response como base del mensaje. Enseña cleanup de sesión, lectura del Transcript y ejecución de Git mediante <code>pi.exec</code>; debe tratarse como ejemplo riesgoso porque decide y persiste cambios sin una revisión final explícita.</p>
+<h3 id="2-bash-spawn-hook-ts">2. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/bash-spawn-hook.ts"><code>bash-spawn-hook.ts</code></a></h3>
+<p>Recrea la herramienta <code>bash</code> con <code>createBashTool()</code> y modifica cada proceso antes de iniciarlo mediante <code>spawnHook</code>. El ejemplo carga <code>~/.profile</code> y agrega <code>PI_SPAWN_HOOK=1</code>, mostrando cómo ajustar comando, directorio y entorno sin reimplementar el backend de procesos.</p>
+<h3 id="3-bookmark-ts">3. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/bookmark.ts"><code>bookmark.ts</code></a></h3>
+<p>Agrega <code>/bookmark</code> y <code>/unbookmark</code> para etiquetar entradas del Transcript con <code>pi.setLabel()</code>. Las etiquetas quedan persistidas y aparecen en <code>/tree</code>, por lo que el ejemplo sirve para navegación, checkpoints semánticos y metadata de sesión.</p>
+<h3 id="4-border-status-editor-ts">4. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/border-status-editor.ts"><code>border-status-editor.ts</code></a></h3>
+<p>Reemplaza el editor con una subclase de <code>CustomEditor</code> cuyos bordes muestran modelo, nivel de razonamiento, uso de contexto, directorio y rama Git. También oculta el indicador y footer estándar, anima un spinner durante el Run y demuestra composición avanzada de editor, lifecycle y renderizado sensible al ancho.</p>
+<h3 id="5-built-in-tool-renderer-ts">5. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/built-in-tool-renderer.ts"><code>built-in-tool-renderer.ts</code></a></h3>
+<p>Vuelve a registrar <code>read</code>, <code>bash</code>, <code>edit</code> y <code>write</code>, delegando la ejecución a las implementaciones originales pero reemplazando <code>renderCall</code> y <code>renderResult</code>. Es la referencia para cambiar la representación visual de Tool Activity sin alterar su comportamiento real.</p>
+<h3 id="6-claude-rules-ts">6. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/claude-rules.ts"><code>claude-rules.ts</code></a></h3>
+<p>Descubre archivos dentro de <code>.claude/rules/</code> y agrega al system prompt un índice para que el Coding Agent pueda leer las reglas pertinentes bajo demanda. Muestra cómo combinar <code>session_start</code>, filesystem y <code>before_agent_start</code> sin insertar siempre el contenido completo de todas las reglas.</p>
+<h3 id="7-commands-ts">7. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/commands.ts"><code>commands.ts</code></a></h3>
+<p>Implementa <code>/commands</code> usando <code>pi.getCommands()</code> para listar comandos provenientes de extensiones, prompts y skills. Incluye autocompletado del filtro por origen, selector interactivo y acceso a <code>sourceInfo</code>, por lo que también enseña cómo mostrar provenance sin inferirla desde el nombre.</p>
+<h3 id="8-confirm-destructive-ts">8. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/confirm-destructive.ts"><code>confirm-destructive.ts</code></a></h3>
+<p>Intercepta <code>session_before_switch</code> y <code>session_before_fork</code> para pedir confirmación antes de reemplazar, limpiar o ramificar una Session. Demuestra que los eventos <code>before_*</code> pueden devolver <code>{ cancel: true }</code> y actuar como barreras de seguridad.</p>
+<h3 id="9-custom-compaction-ts">9. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/custom-compaction.ts"><code>custom-compaction.ts</code></a></h3>
+<p>Reemplaza la compactación estándar desde <code>session_before_compact</code> y produce un resumen personalizado de todo el contexto con otro modelo. Enseña el contrato de una compactación aportada por extensión, el uso de <code>signal</code> y cómo contabilizar el uso de una llamada de modelo anidada.</p>
+<h3 id="10-custom-footer-ts">10. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/custom-footer.ts"><code>custom-footer.ts</code></a></h3>
+<p>El comando <code>/footer</code> alterna un footer propio creado con <code>ctx.ui.setFooter()</code>. La implementación consume datos como rama Git, estados de otras extensiones, modelo y uso de contexto, mostrando cómo sustituir por completo el footer y luego restaurar el incorporado.</p>
+<h3 id="11-custom-header-ts">11. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/custom-header.ts"><code>custom-header.ts</code></a></h3>
+<p>Instala un header personalizado al iniciar la Session y ofrece <code>/builtin-header</code> para volver al original. Es un ejemplo mínimo de <code>ctx.ui.setHeader()</code> y de construcción de componentes TUI para reemplazar branding e indicaciones iniciales.</p>
+<h3 id="12-custom-provider-anthropic">12. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/custom-provider-anthropic"><code>custom-provider-anthropic/</code></a></h3>
+<p>Registra <code>custom-anthropic</code>, un provider completo con autenticación OAuth, modelos propios y una implementación de streaming basada en el SDK oficial de Anthropic. Enseña la variante avanzada de <code>registerProvider</code>: login, refresh de credenciales, catálogo y adaptación de eventos del proveedor; requiere instalar <code>@anthropic-ai/sdk</code>.</p>
+<h3 id="13-custom-provider-gitlab-duo">13. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/custom-provider-gitlab-duo"><code>custom-provider-gitlab-duo/</code></a></h3>
+<p>Integra GitLab Duo a través del AI Gateway y expone modelos Claude y GPT reutilizando los streamers Anthropic/OpenAI de <code>pi-ai</code>. Muestra autenticación con token de GitLab, OAuth, headers y compatibilidad específica del gateway sin reimplementar todos los protocolos de modelo.</p>
+<h3 id="14-dirty-repo-guard-ts">14. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/dirty-repo-guard.ts"><code>dirty-repo-guard.ts</code></a></h3>
+<p>Consulta <code>git status</code> antes de cambiar o bifurcar la Session y avisa cuando hay cambios sin commit. A diferencia de un hook sobre herramientas, protege transiciones de sesión mediante <code>session_before_switch</code> y <code>session_before_fork</code>.</p>
+<h3 id="15-doom-overlay">15. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/doom-overlay"><code>doom-overlay/</code></a></h3>
+<p>Añade <code>/doom-overlay</code> y ejecuta DOOM, compilado a WebAssembly, en un overlay centrado a 35 FPS. Demuestra renderizado TUI en tiempo real, color de 24 bits, controles de teclado y overlays responsivos; descarga el WAD shareware en el primer uso.</p>
+<h3 id="16-dynamic-resources">16. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/dynamic-resources"><code>dynamic-resources/</code></a></h3>
+<p>Responde a <code>resources_discover</code> aportando rutas de skills, prompts y themes durante startup o reload. Es el patrón para generar o seleccionar recursos dinámicamente sin copiarlos a las ubicaciones estándar de descubrimiento.</p>
+<h3 id="17-dynamic-tools-ts">17. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/dynamic-tools.ts"><code>dynamic-tools.ts</code></a></h3>
+<p>Registra una herramienta durante <code>session_start</code> y permite agregar otras en caliente con <code>/add-echo-tool &lt;name&gt;</code>. Prueba que <code>registerTool()</code> puede usarse después del arranque y que las herramientas nuevas quedan disponibles inmediatamente, incluyendo metadata para el system prompt.</p>
+<h3 id="18-entry-renderer-ts">18. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/entry-renderer.ts"><code>entry-renderer.ts</code></a></h3>
+<p>El comando <code>/status-card</code> persiste una entrada con <code>pi.appendEntry()</code> y la dibuja mediante <code>registerEntryRenderer()</code>. La diferencia central es que la tarjeta aparece en el Transcript pero <strong>no</strong> entra en el contexto del modelo, apropiado para UI y estado durable exclusivo del Developer.</p>
+<h3 id="19-event-bus-ts">19. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/event-bus.ts"><code>event-bus.ts</code></a></h3>
+<p>Muestra comunicación entre extensiones mediante el bus compartido <code>pi.events</code>. Un listener se registra al iniciar y <code>/emit</code> publica un evento, ilustrando integración desacoplada sin imports directos entre extensiones.</p>
+<h3 id="20-file-trigger-ts">20. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/file-trigger.ts"><code>file-trigger.ts</code></a></h3>
+<p>Observa un archivo externo —por defecto <code>/tmp/agent-trigger.txt</code>— y, cuando aparece contenido, lo inyecta con <code>pi.sendMessage()</code>. Sirve como puente sencillo para webhooks, automatizaciones o procesos externos y muestra la obligación de cerrar watchers en <code>session_shutdown</code>.</p>
+<h3 id="21-git-checkpoint-ts">21. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/git-checkpoint.ts"><code>git-checkpoint.ts</code></a></h3>
+<p>Crea checkpoints Git alrededor de los turnos y asocia el estado del árbol de trabajo con puntos del Transcript. Al usar <code>/fork</code>, puede ofrecer restaurar el código al checkpoint correspondiente; combina eventos de turno, resultados de herramientas, branching de sesión y operaciones Git.</p>
+<h3 id="22-git-merge-and-resolve-ts">22. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/git-merge-and-resolve.ts"><code>git-merge-and-resolve.ts</code></a></h3>
+<p>Después de <code>agent_end</code>, hace fetch y merge del upstream cuando el árbol está limpio. Si hay conflictos, detecta sus marcadores y envía un Prompt de seguimiento con archivos y rangos <code>ours/theirs</code>, dejando que el Coding Agent resuelva el merge; es deliberadamente invasivo y no debería habilitarse sin aceptar esa política Git.</p>
+<h3 id="23-github-issue-autocomplete-ts">23. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/github-issue-autocomplete.ts"><code>github-issue-autocomplete.ts</code></a></h3>
+<p>Precarga issues abiertos mediante <code>gh issue list</code> y agrega sugerencias <code>#1234</code> encima del autocomplete incorporado. Enseña <code>ctx.ui.addAutocompleteProvider()</code>, delegación al provider anterior y caché local para evitar ejecutar <code>gh</code> en cada tecla.</p>
+<h3 id="24-gondolin">24. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/gondolin"><code>gondolin/</code></a></h3>
+<p>Redirige herramientas incorporadas y comandos <code>!</code> a una micro-VM Gondolin, montando el Workspace como <code>/workspace</code>. Demuestra operaciones remotas/sustituibles, lifecycle de una VM, <code>user_bash</code> y modificación del system prompt para explicar al modelo el entorno invitado.</p>
+<h3 id="25-handoff-ts">25. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/handoff.ts"><code>handoff.ts</code></a></h3>
+<p><code>/handoff &lt;objetivo&gt;</code> resume lo relevante y crea una Session nueva y enfocada, como alternativa a seguir compactando una sesión larga. El ejemplo cubre selección de modelo, UI transitoria, <code>ctx.newSession()</code> y el uso seguro del contexto nuevo dentro de <code>withSession</code>.</p>
+<h3 id="26-hello-ts">26. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/hello.ts"><code>hello.ts</code></a></h3>
+<p>Es el ejemplo mínimo de una herramienta personalizada: declara parámetros con TypeBox, registra <code>hello</code> y devuelve contenido textual más <code>details</code>. Es el mejor punto de partida para entender la forma básica de <code>pi.registerTool()</code>.</p>
+<h3 id="27-hidden-thinking-label-ts">27. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/hidden-thinking-label.ts"><code>hidden-thinking-label.ts</code></a></h3>
+<p>Personaliza el rótulo que sustituye bloques de razonamiento ocultos con <code>ctx.ui.setHiddenThinkingLabel()</code>. El comando <code>/thinking-label</code> permite alternar variantes y probar cómo la función recibe información del bloque oculto.</p>
+<h3 id="28-inline-bash-ts">28. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/inline-bash.ts"><code>inline-bash.ts</code></a></h3>
+<p>Expande expresiones <code>!{comando}</code> dentro del Prompt antes de enviarlo al modelo. Usa el evento <code>input</code>, ejecuta los comandos y devuelve una transformación del texto, mostrando preprocesamiento de entrada con resultados locales incorporados.</p>
+<h3 id="29-input-transform-streaming-ts">29. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/input-transform-streaming.ts"><code>input-transform-streaming.ts</code></a></h3>
+<p>Consulta <code>event.streamingBehavior</code> para distinguir Prompts normales, steering y follow-ups. Omite preprocesamiento costoso durante steering de baja latencia y demuestra cómo una transformación debe adaptarse al momento en que llega la entrada.</p>
+<h3 id="30-input-transform-ts">30. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/input-transform.ts"><code>input-transform.ts</code></a></h3>
+<p>Implementa los tres resultados del evento <code>input</code>: <code>continue</code>, <code>transform</code> y <code>handled</code>. <code>?quick</code> reescribe el Prompt, mientras <code>ping</code> y <code>time</code> responden mediante UI sin iniciar un Run del modelo.</p>
+<h3 id="31-interactive-shell-ts">31. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/interactive-shell.ts"><code>interactive-shell.ts</code></a></h3>
+<p>Intercepta <code>user_bash</code> para ejecutar programas interactivos como Vim, <code>htop</code> o <code>git rebase -i</code> con control completo de terminal. Suspende temporalmente la TUI de Pi y la restaura al terminar, un patrón distinto de capturar stdout con la herramienta <code>bash</code> normal.</p>
+<h3 id="32-kimi-deferred-tools-ts">32. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/kimi-deferred-tools.ts"><code>kimi-deferred-tools.ts</code></a></h3>
+<p>Presenta un buscador <code>tool_search</code> y mantiene una calculadora fuera del conjunto activo hasta que el modelo la solicita. Es una demostración mínima de herramientas diferidas: registrar todo, activar dinámicamente con <code>setActiveTools()</code> y reducir el conjunto inicial de schemas.</p>
+<h3 id="33-mac-system-theme-ts">33. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/mac-system-theme.ts"><code>mac-system-theme.ts</code></a></h3>
+<p>Detecta si macOS está en modo claro u oscuro y sincroniza el theme de Pi; además observa cambios mientras la Session está abierta. Enseña <code>getTheme()</code>/<code>setTheme()</code>, integración con el sistema operativo y cleanup de procesos o timers.</p>
+<h3 id="34-message-renderer-ts">34. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/message-renderer.ts"><code>message-renderer.ts</code></a></h3>
+<p>Registra un renderer para mensajes personalizados y ofrece <code>/status</code> para emitir uno con color, formato y detalles expandibles. A diferencia de <code>entry-renderer.ts</code>, estos mensajes creados con <code>sendMessage()</code> sí participan en el contexto del modelo.</p>
+<h3 id="35-minimal-mode-ts">35. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/minimal-mode.ts"><code>minimal-mode.ts</code></a></h3>
+<p>Sobrescribe el renderizado de <code>read</code>, <code>bash</code>, <code>write</code>, <code>edit</code>, <code>find</code>, <code>grep</code> y <code>ls</code>. En vista colapsada muestra solo la invocación y reserva el resultado completo para la vista expandida, demostrando una presentación de Tool Activity más silenciosa.</p>
+<h3 id="36-modal-editor-ts">36. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/modal-editor.ts"><code>modal-editor.ts</code></a></h3>
+<p>Reemplaza el editor por una subclase de <code>CustomEditor</code> con modos similares a Vim: insert, normal, movimiento con <code>hjkl</code> y comandos de edición. Muestra cómo interceptar teclas propias y delegar las restantes a <code>super.handleInput()</code> para conservar keybindings globales.</p>
+<h3 id="37-model-status-ts">37. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/model-status.ts"><code>model-status.ts</code></a></h3>
+<p>Escucha <code>model_select</code> y actualiza un estado del footer con provider/modelo y origen del cambio. Es la referencia mínima para reaccionar a <code>/model</code>, ciclos por teclado o restauración de una Session.</p>
+<h3 id="38-notify-ts">38. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/notify.ts"><code>notify.ts</code></a></h3>
+<p>Envía una notificación de escritorio desde el terminal cuando el Coding Agent termina y espera otra entrada. Usa secuencias OSC compatibles con terminales como Ghostty, iTerm2 y WezTerm, mostrando una integración externa disparada por lifecycle.</p>
+<h3 id="39-overlay-qa-tests-ts">39. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/overlay-qa-tests.ts"><code>overlay-qa-tests.ts</code></a></h3>
+<p>Incluye una batería manual de comandos para probar anchors, márgenes, porcentajes, stacking, foco, ocultamiento, overflow, side panels y animación. No es una feature única sino un laboratorio de QA para <code>ctx.ui.custom({ overlay: true })</code> y <code>OverlayHandle</code>.</p>
+<h3 id="40-overlay-test-ts">40. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/overlay-test.ts"><code>overlay-test.ts</code></a></h3>
+<p><code>/overlay-test</code> abre un modal flotante con inputs inline y casos difíciles como emoji, caracteres anchos y texto con estilos ANSI. Es una prueba compacta de composición y manejo de teclado dentro de overlays.</p>
+<h3 id="41-permission-gate-ts">41. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/permission-gate.ts"><code>permission-gate.ts</code></a></h3>
+<p>Intercepta <code>tool_call</code> y pide confirmación antes de comandos <code>bash</code> que coinciden con patrones peligrosos como <code>rm -rf</code>, <code>sudo</code> o permisos 777. Enseña bloqueo preventivo mediante <code>{ block: true, reason }</code>; una lista por patrones no reemplaza una política de seguridad completa.</p>
+<h3 id="42-pirate-ts">42. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/pirate.ts"><code>pirate.ts</code></a></h3>
+<p>El comando <code>/pirate</code> cambia estado interno y <code>before_agent_start</code> modifica el system prompt para que el Coding Agent responda como pirata. Es una demostración pequeña de comportamiento dinámico por turno y de cómo encadenar cambios al prompt efectivo.</p>
+<h3 id="43-plan-mode">43. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/plan-mode"><code>plan-mode/</code></a></h3>
+<p>Implementa un modo de planificación de solo lectura con <code>/plan</code>, flag <code>--plan</code> y shortcut. Deshabilita <code>edit</code>/<code>write</code>, filtra <code>bash</code> con una allowlist, extrae pasos numerados, persiste el plan y muestra progreso con <code>[DONE:n]</code>; es uno de los ejemplos más completos de coordinación entre tools, eventos, UI y estado.</p>
+<h3 id="44-preset-ts">44. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/preset.ts"><code>preset.ts</code></a></h3>
+<p>Define presets nombrados de modelo, thinking level, herramientas e instrucciones. Se activan con <code>--preset</code>, <code>/preset</code> o un shortcut y se guardan en JSON, mostrando configuración compuesta, autocompletado, <code>setModel()</code>, <code>setThinkingLevel()</code> y <code>setActiveTools()</code>.</p>
+<h3 id="45-project-trust-ts">45. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/project-trust.ts"><code>project-trust.ts</code></a></h3>
+<p>Implementa el evento temprano <code>project_trust</code> para decidir, recordar o dejar indeterminada la confianza de un Workspace. Debe instalarse globalmente o cargarse con <code>-e</code>, porque una extensión local todavía no puede decidir si su propio Workspace es confiable.</p>
+<h3 id="46-prompt-customizer-ts">46. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/prompt-customizer.ts"><code>prompt-customizer.ts</code></a></h3>
+<p>Lee <code>systemPromptOptions</code> dentro de <code>before_agent_start</code> para saber qué herramientas, skills e instrucciones están realmente activas. Agrega orientación contextual sin redescubrir recursos ni ignorar los append prompts proporcionados por el Developer.</p>
+<h3 id="47-protected-paths-ts">47. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/protected-paths.ts"><code>protected-paths.ts</code></a></h3>
+<p>Bloquea <code>write</code> y <code>edit</code> cuando el destino coincide con rutas sensibles como <code>.env</code>, <code>.git/</code> o <code>node_modules/</code>. Ilustra narrowing tipado de eventos de herramientas y una política por path; para producción también habría que considerar normalización, symlinks y otras herramientas mutadoras.</p>
+<h3 id="48-provider-payload-ts">48. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/provider-payload.ts"><code>provider-payload.ts</code></a></h3>
+<p>Registra <code>before_provider_request</code> y <code>after_provider_response</code> para escribir payloads, status y headers en <code>.pi/provider-payload.log</code>. Es útil para depurar serialización y caching del provider, pero puede registrar Prompts, código y credenciales sensibles, por lo que no debería quedar habilitado indiscriminadamente.</p>
+<h3 id="49-qna-ts">49. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/qna.ts"><code>qna.ts</code></a></h3>
+<p><code>/qna</code> analiza la última Response, extrae preguntas y permite elegir o editar respuestas mediante UI. Finalmente precarga texto en el editor con <code>setEditorText()</code>, mostrando el patrón “generador de Prompt”: transformar una Response en la próxima entrada del Developer.</p>
+<h3 id="50-question-ts">50. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/question.ts"><code>question.ts</code></a></h3>
+<p>Registra una herramienta <code>question</code> con opciones y entrada libre. Usa <code>ctx.ui.custom()</code> para combinar lista y editor inline, y devuelve la elección al modelo como resultado de herramienta.</p>
+<h3 id="51-questionnaire-ts">51. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/questionnaire.ts"><code>questionnaire.ts</code></a></h3>
+<p>Amplía el patrón anterior con una herramienta <code>questionnaire</code> que admite una o varias preguntas. Para múltiples preguntas ofrece tabs, navegación, respuestas parciales y confirmación conjunta, mostrando una UI modal con estado más complejo.</p>
+<h3 id="52-rainbow-editor-ts">52. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/rainbow-editor.ts"><code>rainbow-editor.ts</code></a></h3>
+<p>Decora la palabra <code>ultrathink</code> con un brillo animado dentro de un editor personalizado. Es un ejemplo deliberadamente visual de renderizado dinámico, timers, invalidación y extensión de <code>CustomEditor</code>.</p>
+<h3 id="53-reload-runtime-ts">53. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/reload-runtime.ts"><code>reload-runtime.ts</code></a></h3>
+<p>Agrega <code>/reload-runtime</code>, que llama <code>ctx.reload()</code>, y la herramienta <code>reload_runtime</code>, que encola ese comando como follow-up. Enseña por qué el reload pertenece a <code>ExtensionCommandContext</code> y cómo tratarlo como operación terminal para no reutilizar estado de la instancia vieja.</p>
+<h3 id="54-rpc-demo-ts">54. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/rpc-demo.ts"><code>rpc-demo.ts</code></a></h3>
+<p>Ejercita métodos de UI soportados por modo RPC: input, editor, confirmación, notificaciones, status, widgets y prefill. Está pensado para ejecutarse junto al cliente de ejemplo <code>examples/rpc-extension-ui.ts</code> y verificar el protocolo UI bidireccional fuera de la TUI.</p>
+<h3 id="55-sandbox">55. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/sandbox"><code>sandbox/</code></a></h3>
+<p>Usa <code>@anthropic-ai/sandbox-runtime</code> para aplicar restricciones de filesystem y red a comandos <code>bash</code> a nivel del sistema operativo. Incluye configuración por Workspace, comando <code>/sandbox</code>, flag <code>--no-sandbox</code> y soporte para <code>user_bash</code>; depende de <code>sandbox-exec</code> en macOS o Bubblewrap en Linux.</p>
+<h3 id="56-send-user-message-ts">56. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/send-user-message.ts"><code>send-user-message.ts</code></a></h3>
+<p>Expone <code>/ask</code>, <code>/steer</code>, <code>/followup</code> y <code>/askwith</code> para demostrar <code>pi.sendUserMessage()</code>. A diferencia de un mensaje custom, genera un Prompt real y enseña las reglas de entrega inmediata, steering durante streaming y follow-up después de que el Run se estabilice.</p>
+<h3 id="57-session-name-ts">57. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/session-name.ts"><code>session-name.ts</code></a></h3>
+<p><code>/session-name</code> consulta o cambia el nombre visible de la Session con <code>getSessionName()</code> y <code>setSessionName()</code>. El nombre se persiste y reemplaza al primer Prompt como etiqueta en el selector de sesiones.</p>
+<h3 id="58-shutdown-command-ts">58. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/shutdown-command.ts"><code>shutdown-command.ts</code></a></h3>
+<p>Agrega <code>/quit</code> y herramientas que solicitan salida mediante <code>ctx.shutdown()</code>. Demuestra shutdown cooperativo: Pi espera un punto seguro, emite <code>session_shutdown</code> para cleanup y luego termina, en vez de finalizar abruptamente el proceso.</p>
+<h3 id="59-snake-ts">59. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/snake.ts"><code>snake.ts</code></a></h3>
+<p><code>/snake</code> abre un juego de Snake como componente TUI interactivo. Sirve como ejemplo accesible de loop de animación, teclado, renderizado custom y persistencia de estado en la Session.</p>
+<h3 id="60-space-invaders-ts">60. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/space-invaders.ts"><code>space-invaders.ts</code></a></h3>
+<p><code>/invaders</code> ejecuta Space Invaders con movimiento suave usando eventos press/release del protocolo de teclado Kitty. Implementa game loop, colisiones, caché de render, pausa y guardado mediante <code>appendEntry()</code>, mostrando una UI custom de alta interacción.</p>
+<h3 id="61-ssh-ts">61. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/ssh.ts"><code>ssh.ts</code></a></h3>
+<p>Con <code>--ssh</code>, sustituye las operaciones de <code>read</code>, <code>write</code>, <code>edit</code> y <code>bash</code> para ejecutarlas en una máquina remota. También redirige <code>user_bash</code> y modifica el system prompt para que el Coding Agent entienda el entorno; requiere acceso SSH ya configurado.</p>
+<h3 id="62-status-line-ts">62. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/status-line.ts"><code>status-line.ts</code></a></h3>
+<p>Actualiza una sección persistente del footer con <code>ctx.ui.setStatus()</code> al iniciar, comenzar y terminar turnos. Demuestra colores del theme y estados pequeños que conviven con el footer estándar.</p>
+<h3 id="63-structured-output-ts">63. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/structured-output.ts"><code>structured-output.ts</code></a></h3>
+<p>Define <code>structured_output</code>, una herramienta final con schema estricto y <code>terminate: true</code>. El objetivo es que el Run pueda acabar en el resultado estructurado sin pagar otra llamada al modelo, siempre que todas las herramientas finalizadas en ese batch también sean terminantes.</p>
+<h3 id="64-subagent">64. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/subagent"><code>subagent/</code></a></h3>
+<p>Registra <code>subagent</code>, que inicia procesos Pi separados con contextos aislados. Soporta ejecución individual, paralela y encadenada, streaming de progreso, límites de concurrencia, cancelación y contabilidad de uso; además descubre definiciones Markdown de agentes globales o, con consentimiento, locales al Workspace.</p>
+<h3 id="65-summarize-ts">65. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/summarize.ts"><code>summarize.ts</code></a></h3>
+<p><code>/summarize</code> llama a otro modelo para resumir la Session y muestra el resultado en una UI transitoria. Demuestra llamadas de modelo anidadas, selección explícita de provider/modelo, loader cancelable y renderizado Markdown.</p>
+<h3 id="66-system-prompt-header-ts">66. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/system-prompt-header.ts"><code>system-prompt-header.ts</code></a></h3>
+<p>Durante <code>agent_start</code>, obtiene el system prompt efectivo con <code>ctx.getSystemPrompt()</code> y muestra su longitud en el footer. Limpia el estado durante <code>session_shutdown</code>, por lo que es una referencia mínima de inspección del prompt y lifecycle de UI.</p>
+<h3 id="67-tic-tac-toe-ts">67. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/tic-tac-toe.ts"><code>tic-tac-toe.ts</code></a></h3>
+<p>Permite que el Developer juegue con <code>/tic-tac-toe</code> mientras el modelo juega mediante herramientas. Usa <code>executionMode: &quot;sequential&quot;</code> para serializar acciones sobre estado compartido, persiste el tablero y sincroniza UI, contexto y navegación del árbol de sesión.</p>
+<h3 id="68-timed-confirm-ts">68. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/timed-confirm.ts"><code>timed-confirm.ts</code></a></h3>
+<p>Ofrece <code>/timed</code>, <code>/timed-select</code> y <code>/timed-signal</code> para diálogos que se descartan automáticamente. Compara el timeout incorporado —con countdown— con un <code>AbortSignal</code>, que permite distinguir expiración de cancelación manual.</p>
+<h3 id="69-titlebar-spinner-ts">69. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/titlebar-spinner.ts"><code>titlebar-spinner.ts</code></a></h3>
+<p>Anima un spinner Braille en el título del terminal durante <code>agent_start</code>/<code>agent_end</code>. Muestra <code>ctx.ui.setTitle()</code>, timers e higiene de cleanup en <code>session_shutdown</code>.</p>
+<h3 id="70-todo-ts">70. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/todo.ts"><code>todo.ts</code></a></h3>
+<p>Registra la herramienta <code>todo</code> para que el modelo administre tareas y <code>/todos</code> para que el Developer las vea. Persiste snapshots en <code>details</code>, reconstruye estado en <code>session_start</code> y <code>session_tree</code>, y personaliza el render de llamadas y resultados; es el ejemplo principal de estado compatible con branching.</p>
+<h3 id="71-tool-override-ts">71. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/tool-override.ts"><code>tool-override.ts</code></a></h3>
+<p>Reemplaza la herramienta incorporada <code>read</code> con una variante que registra accesos y aplica controles, además de exponer <code>/read-log</code>. Enseña que una extensión puede usar el mismo nombre que una herramienta built-in y que debe conservar exactamente su contrato de resultado.</p>
+<h3 id="72-tools-ts">72. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/tools.ts"><code>tools.ts</code></a></h3>
+<p>Implementa <code>/tools</code>, una pantalla basada en <code>SettingsList</code> para habilitar o deshabilitar herramientas. Usa <code>getAllTools()</code>, <code>getActiveTools()</code> y <code>setActiveTools()</code>, y persiste la selección de forma compatible con reload y navegación por ramas.</p>
+<h3 id="73-trigger-compact-ts">73. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/trigger-compact.ts"><code>trigger-compact.ts</code></a></h3>
+<p>Llama <code>ctx.compact()</code> cuando el uso de contexto supera un umbral y agrega <code>/trigger-compact</code> para activación manual. Muestra callbacks de éxito/error y la diferencia entre solicitar una compactación y bloquear esperando su finalización.</p>
+<h3 id="74-truncated-tool-ts">74. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/truncated-tool.ts"><code>truncated-tool.ts</code></a></h3>
+<p>Envuelve Ripgrep como herramienta <code>rg</code> y limita la salida a 50 KB o 2000 líneas con las utilidades oficiales de truncamiento. Si recorta, guarda el resultado completo en un archivo temporal e informa su ubicación, evitando saturar el contexto del modelo.</p>
+<h3 id="75-widget-placement-ts">75. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/widget-placement.ts"><code>widget-placement.ts</code></a></h3>
+<p>Coloca un widget arriba y otro debajo del editor durante <code>session_start</code>. Es el ejemplo mínimo de <code>ctx.ui.setWidget()</code> y de su opción <code>placement: &quot;belowEditor&quot;</code>.</p>
+<h3 id="76-with-deps">76. <a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions/with-deps"><code>with-deps/</code></a></h3>
+<p>Es una extensión empaquetada con su propio <code>package.json</code> y dependencia <code>ms</code>. Registra <code>parse_duration</code> para probar que Jiti resuelve módulos desde el <code>node_modules</code> de la extensión; requiere ejecutar <code>npm install</code> en el directorio.</p>
+<h3 id="77-working-indicator-ts">77. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/working-indicator.ts"><code>working-indicator.ts</code></a></h3>
+<p>Personaliza el símbolo animado que aparece mientras Pi genera una Response. <code>/working-indicator</code> alterna distintas secuencias, colores o restauración del valor predeterminado mediante <code>ctx.ui.setWorkingIndicator()</code>.</p>
+<h3 id="78-working-message-test-ts">78. <a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/working-message-test.ts"><code>working-message-test.ts</code></a></h3>
+<p>Configura un mensaje <code>Working... (custom)</code> y un punto de color durante <code>session_start</code>. Su propósito es de regresión/manual QA: verificar que <code>setWorkingMessage()</code> y <code>setWorkingIndicator()</code> sobrevivan a la recreación del loader entre Runs.</p>
+<h2 id="que-ejemplos-conviene-estudiar-primero">Qué ejemplos conviene estudiar primero</h2>
+<p>Un recorrido incremental razonable es:</p>
+<ol>
+<li><code>hello.ts</code>: forma mínima de una herramienta.</li>
+<li><code>permission-gate.ts</code>: interceptar y bloquear Tool Activity.</li>
+<li><code>input-transform.ts</code>: controlar la entrada antes del Run.</li>
+<li><code>todo.ts</code>: estado persistente y rendering.</li>
+<li><code>tools.ts</code>: comandos y UI custom.</li>
+<li><code>dynamic-resources/</code>: skills, prompts y themes.</li>
+<li><code>plan-mode/</code>: coordinación de varias APIs.</li>
+<li><code>subagent/</code> o un custom provider: integración avanzada.</li>
+</ol>
+<p>Para Pandi, los ejemplos más relevantes son los que separan capacidades del agente de detalles exclusivos de la TUI: <code>hello.ts</code>, <code>todo.ts</code>, <code>permission-gate.ts</code>, <code>dynamic-tools.ts</code>, <code>dynamic-resources/</code>, los providers y los eventos de lifecycle. Los ejemplos basados en <code>ctx.ui.custom()</code>, editores, footer u overlays requieren un adaptation layer para una GUI web.</p>
+<h2 id="fuentes-primarias">Fuentes primarias</h2>
+<ul>
+<li><a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/docs/extensions.md">Documentación oficial de extensiones</a></li>
+<li><a href="https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/examples/extensions/README.md">README oficial de los ejemplos</a></li>
+<li><a href="https://github.com/earendil-works/pi-mono/tree/main/packages/coding-agent/examples/extensions">Directorio oficial de ejemplos</a></li>
+<li>Snapshot local inspeccionado: <code>@earendil-works/pi-coding-agent</code> 0.81.0, <code>examples/extensions/</code></li>
+</ul>
+
+</main>
+</body>
+</html>

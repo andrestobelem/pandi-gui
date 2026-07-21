@@ -20,6 +20,7 @@
     "check": "biome check .",
     "check:write": "biome check --write .",
     "audit": "env -u npm_config_allow_scripts npm audit --audit-level=moderate",
+    "docs:html": "node scripts/markdown-to-html.mts",
     "candidate": "node scripts/create-candidate.mts",
     "commit-stage:checks": "npm run check && npm run typecheck && npm test && npm run audit",
     "commit-stage": "npm run commit-stage:checks && npm run package && npm run candidate",
@@ -51,6 +52,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "electron": "^43.1.1",
     "jsdom": "^29.1.1",
+    "marked": "^18.0.6",
     "typescript": "~5.9.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"

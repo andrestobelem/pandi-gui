@@ -30,6 +30,16 @@ PANDI_AGENT_ENGINE=deterministic npm start
 
 Enter a prompt and observe the response as streamed deltas. Use **Cancel** or press **Escape** to abort an active response.
 
+## Markdown artifacts
+
+Generate a self-contained, readable HTML file next to any Markdown artifact:
+
+```bash
+npm run docs:html -- docs/research/pi-extension-examples.md
+```
+
+The generated document includes responsive light/dark styles, a table of contents and printable formatting. Raw HTML in the Markdown is escaped.
+
 ## Commit stage
 
 Run the same secret-free commit stage used by CI:
