@@ -3,7 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, expect, it } from "vitest";
-import { continueWorkspaceSession } from "./workspace-session";
+import {
+  continueWorkspaceSession,
+  createWorkspaceSession,
+} from "./workspace-session";
 
 const temporaryDirectories: string[] = [];
 
@@ -73,6 +76,20 @@ describe("Pandi Workspace Session storage", () => {
         data: { source: "Pandi" },
       }),
     );
+
+    const newPandiSession = createWorkspaceSession(
+      SessionManager,
+      workspaceA,
+      join(root, "pandi"),
+    );
+    expect(newPandiSession.getEntries()).toEqual([]);
+    expect(newPandiSession.getSessionId()).not.toBe(
+      restoredPandiSession.getSessionId(),
+    );
+    persistProbe(newPandiSession, "New Pandi Session");
+    expect(
+      await SessionManager.list(workspaceA, newPandiSession.getSessionDir()),
+    ).toHaveLength(2);
 
     const otherWorkspaceSession = continueWorkspaceSession(
       SessionManager,

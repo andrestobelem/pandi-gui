@@ -168,6 +168,7 @@ export function App() {
   const [workspaceName, setWorkspaceName] = useState("Current Workspace");
   const [runs, setRuns] = useState<TranscriptRun[]>([]);
   const [isRestoring, setIsRestoring] = useState(true);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
 
@@ -188,8 +189,16 @@ export function App() {
   useEffect(() => {
     const unsubscribe = window.pandi.subscribe((event) => {
       switch (event.type) {
+        case "session.created":
+          setRuns([]);
+          setInput("");
+          setIsCreatingSession(false);
+          setIsRestoring(false);
+          setIsRunning(false);
+          break;
         case "session.restored":
           setRuns(restoreRuns(event.runs));
+          setIsCreatingSession(false);
           setIsRestoring(false);
           setIsRunning(false);
           break;
@@ -239,6 +248,7 @@ export function App() {
           );
           break;
         case "agent.failed":
+          setIsCreatingSession(false);
           setIsRestoring(false);
           setRuns((current) =>
             updateLatestRun(current, (run) => ({
@@ -278,6 +288,13 @@ export function App() {
     if (runs.length === 0) return;
     transcriptEnd.current?.scrollIntoView({ block: "end" });
   }, [runs]);
+
+  function startNewSession(): void {
+    if (isRestoring || isCreatingSession || isRunning) return;
+
+    setIsCreatingSession(true);
+    window.pandi.newSession();
+  }
 
   function submitOnEnter(event: ReactKeyboardEvent<HTMLTextAreaElement>): void {
     if (
@@ -365,10 +382,24 @@ export function App() {
             <p className="eyebrow">Current Workspace</p>
             <h1>Active Session</h1>
           </div>
-          <span className={`run-status${isRunning ? " is-running" : ""}`}>
-            <span className="status-dot" />
-            {isRunning ? "Running" : "Agent ready"}
-          </span>
+          <div className="session-header-actions">
+            <button
+              className="new-session-button"
+              disabled={isRestoring || isCreatingSession || isRunning}
+              onClick={startNewSession}
+              type="button"
+            >
+              New Session
+            </button>
+            <span className={`run-status${isRunning ? " is-running" : ""}`}>
+              <span className="status-dot" />
+              {isCreatingSession
+                ? "Starting Session…"
+                : isRunning
+                  ? "Running"
+                  : "Agent ready"}
+            </span>
+          </div>
         </header>
 
         <section aria-label="Transcript" className="transcript">

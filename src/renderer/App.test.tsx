@@ -28,6 +28,7 @@ describe("Workspace Session", () => {
   it("orients the Developer before the first Prompt", async () => {
     window.pandi = {
       restore: vi.fn(),
+      newSession: vi.fn(),
       prompt: vi.fn(),
       abort: vi.fn(),
       subscribe: () => () => {},
@@ -52,6 +53,7 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       restore,
+      newSession: vi.fn(),
       prompt: vi.fn(),
       abort: vi.fn(),
       workspace: async () => ({ version: 1, name: "pandi-gui" }),
@@ -112,10 +114,57 @@ describe("Workspace Session", () => {
     ).toBeNull();
   });
 
+  it("starts a new Session only after Agent Host confirmation", () => {
+    const newSession = vi.fn();
+    let receive: (event: AgentHostEvent) => void = () => {};
+    window.pandi = {
+      newSession,
+      restore() {
+        receive({
+          version: 1,
+          type: "session.restored",
+          runs: [
+            {
+              prompt: "Old context",
+              status: "settled",
+              items: [{ type: "response", text: "Old Response" }],
+            },
+          ],
+        });
+      },
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+    render(<App />);
+
+    const startNewSession = screen.getByRole("button", {
+      name: "New Session",
+    });
+    fireEvent.click(startNewSession);
+
+    expect(newSession).toHaveBeenCalledOnce();
+    expect(screen.getByText("Old context")).toBeTruthy();
+    expect((startNewSession as HTMLButtonElement).disabled).toBe(true);
+
+    act(() => receive({ version: 1, type: "session.created" }));
+
+    expect(screen.queryByText("Old context")).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "What should we build?" }),
+    ).toBeTruthy();
+    expect((startNewSession as HTMLButtonElement).disabled).toBe(false);
+  });
+
   it("submits a Prompt and renders a streamed Response", () => {
     const prompt = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      newSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -150,6 +199,7 @@ describe("Workspace Session", () => {
   it("renders restored Markdown without active HTML, links, or images", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      newSession: vi.fn(),
       restore() {
         receive({
           version: 1,
@@ -213,6 +263,7 @@ describe("Workspace Session", () => {
   it("renders running and completed read Tool Activity", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      newSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -286,6 +337,7 @@ describe("Workspace Session", () => {
   it("renders failed read Tool Activity distinctly", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      newSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -333,6 +385,7 @@ describe("Workspace Session", () => {
   it("preserves every Run and scrolls to the latest Response", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      newSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -384,6 +437,7 @@ describe("Workspace Session", () => {
     const abort = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
+      newSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -403,11 +457,25 @@ describe("Workspace Session", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "New Session",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
     fireEvent.keyDown(window, { key: "Escape" });
     expect(abort).toHaveBeenCalledOnce();
 
     act(() => receive({ version: 1, type: "agent.settled" }));
     expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "New Session",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false);
     expect(screen.queryByText("Thinking…")).toBeNull();
   });
 });

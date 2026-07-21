@@ -17,6 +17,12 @@ const api: PandiApi = {
       type: "session.restore",
     });
   },
+  newSession() {
+    ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
+      version: 1,
+      type: "session.new",
+    });
+  },
   prompt(text) {
     ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
       version: 1,

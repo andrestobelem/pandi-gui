@@ -19,6 +19,8 @@ export class DeterministicAgentEngine implements AgentEngine {
     return [];
   }
 
+  async newSession(): Promise<void> {}
+
   async prompt(text: string): Promise<void> {
     const controller = new AbortController();
     this.#activeController = controller;

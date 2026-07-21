@@ -18,6 +18,14 @@ describe("agent host wire protocol", () => {
     expect(parseAgentHostCommand(command)).toEqual(command);
   });
 
+  it("accepts a versioned command and event for a new Session", () => {
+    const command = { version: 1, type: "session.new" };
+    const event = { version: 1, type: "session.created" };
+
+    expect(parseAgentHostCommand(command)).toEqual(command);
+    expect(parseAgentHostEvent(event)).toEqual(event);
+  });
+
   it("accepts Session restoration across the wire", () => {
     const command = { version: 1, type: "session.restore" };
     const event = {

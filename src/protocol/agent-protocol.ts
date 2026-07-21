@@ -20,6 +20,10 @@ const agentHostCommandSchema = z.discriminatedUnion("type", [
     version: z.literal(1),
     type: z.literal("session.restore"),
   }),
+  z.object({
+    version: z.literal(1),
+    type: z.literal("session.new"),
+  }),
 ]);
 
 const transcriptItemSchema = z.discriminatedUnion("type", [
@@ -45,6 +49,10 @@ const transcriptRunSchema = z.object({
 });
 
 const agentHostEventSchema = z.discriminatedUnion("type", [
+  z.object({
+    version: z.literal(1),
+    type: z.literal("session.created"),
+  }),
   z.object({
     version: z.literal(1),
     type: z.literal("session.restored"),

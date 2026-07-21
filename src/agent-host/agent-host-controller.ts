@@ -27,11 +27,17 @@ export class AgentHostController {
       return;
     }
 
-    this.publish({
-      version: 1,
-      type: "session.restored",
-      runs: await this.engine.restore(),
-    });
+    if (command.type === "session.restore") {
+      this.publish({
+        version: 1,
+        type: "session.restored",
+        runs: await this.engine.restore(),
+      });
+      return;
+    }
+
+    await this.engine.newSession();
+    this.publish({ version: 1, type: "session.created" });
   }
 
   async dispose(): Promise<void> {

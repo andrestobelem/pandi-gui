@@ -5,6 +5,7 @@ export type AgentEventListener = (event: AgentHostEvent) => void;
 export interface AgentEngine {
   subscribe(listener: AgentEventListener): () => void;
   restore(): Promise<TranscriptRun[]>;
+  newSession(): Promise<void>;
   prompt(text: string): Promise<void>;
   abort(): Promise<void>;
   dispose(): Promise<void>;

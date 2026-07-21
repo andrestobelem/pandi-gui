@@ -18,6 +18,18 @@ describe("agent host wire seam", () => {
     ]);
   });
 
+  it("creates a new deterministic Session", async () => {
+    const events: AgentHostEvent[] = [];
+    const host = new AgentHostController(
+      new DeterministicAgentEngine(),
+      (event) => events.push(event),
+    );
+
+    await host.receive({ version: 1, type: "session.new" });
+
+    expect(events).toEqual([{ version: 1, type: "session.created" }]);
+  });
+
   it("dispatches a prompt command and publishes engine events", async () => {
     const events: AgentHostEvent[] = [];
     const host = new AgentHostController(

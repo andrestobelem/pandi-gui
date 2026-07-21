@@ -7,7 +7,10 @@ import {
   type TranscriptRun,
 } from "../protocol/agent-protocol";
 import type { AgentEngine, AgentEventListener } from "./agent-engine";
-import { continueWorkspaceSession } from "./workspace-session";
+import {
+  continueWorkspaceSession,
+  createWorkspaceSession,
+} from "./workspace-session";
 
 export interface PiSessionPort {
   activeBranch(): unknown[];
@@ -17,7 +20,11 @@ export interface PiSessionPort {
   dispose(): void;
 }
 
-type PiSessionFactory = (workspace: string) => Promise<PiSessionPort>;
+type PiSessionMode = "continue" | "new";
+type PiSessionFactory = (
+  workspace: string,
+  mode: PiSessionMode,
+) => Promise<PiSessionPort>;
 
 export class PiAgentEngine implements AgentEngine {
   readonly #listeners = new Set<AgentEventListener>();
@@ -41,6 +48,16 @@ export class PiAgentEngine implements AgentEngine {
 
   async restore(): Promise<TranscriptRun[]> {
     return restoredTranscript((await this.#session()).activeBranch());
+  }
+
+  async newSession(): Promise<void> {
+    this.#unsubscribeFromSession?.();
+    this.#unsubscribeFromSession = undefined;
+    if (this.#sessionPromise) {
+      (await this.#sessionPromise).dispose();
+    }
+    this.#sessionPromise = undefined;
+    await this.#session("new");
   }
 
   async prompt(text: string): Promise<void> {
@@ -72,9 +89,9 @@ export class PiAgentEngine implements AgentEngine {
     this.#listeners.clear();
   }
 
-  async #session(): Promise<PiSessionPort> {
+  async #session(mode: PiSessionMode = "continue"): Promise<PiSessionPort> {
     if (!this.#sessionPromise) {
-      this.#sessionPromise = this.#createSession(this.#workspace);
+      this.#sessionPromise = this.#createSession(this.#workspace, mode);
       const session = await this.#sessionPromise;
       this.#unsubscribeFromSession = session.subscribe((event) => {
         this.#receivePiEvent(event);
@@ -326,7 +343,10 @@ function toolResultText(result: unknown): string {
   return serializedToolValue(result);
 }
 
-async function createPiSession(workspace: string): Promise<PiSessionPort> {
+async function createPiSession(
+  workspace: string,
+  mode: PiSessionMode,
+): Promise<PiSessionPort> {
   const {
     createAgentSession,
     DefaultResourceLoader,
@@ -347,16 +367,18 @@ async function createPiSession(workspace: string): Promise<PiSessionPort> {
   });
   await resourceLoader.reload();
 
+  const sessionStorageRoot =
+    process.env.PANDI_SESSION_ROOT ?? join(agentDir, "pandi-sessions");
+  const sessionManager =
+    mode === "new"
+      ? createWorkspaceSession(SessionManager, workspace, sessionStorageRoot)
+      : continueWorkspaceSession(SessionManager, workspace, sessionStorageRoot);
   const { session } = await createAgentSession({
     agentDir,
     cwd: workspace,
     tools: ["read"],
     resourceLoader,
-    sessionManager: continueWorkspaceSession(
-      SessionManager,
-      workspace,
-      process.env.PANDI_SESSION_ROOT ?? join(agentDir, "pandi-sessions"),
-    ),
+    sessionManager,
     settingsManager,
   });
 

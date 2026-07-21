@@ -97,6 +97,60 @@ describe("Pi agent engine adapter", () => {
     expect(sessionCreations).toBe(1);
   });
 
+  it("replaces the active Pi Session with empty context", async () => {
+    const oldSessionPrompts: string[] = [];
+    const newSessionPrompts: string[] = [];
+    let oldSessionDisposals = 0;
+    const oldSession: PiSessionPort = {
+      activeBranch() {
+        return [
+          {
+            type: "message",
+            id: "user-1",
+            message: { role: "user", content: "Old context" },
+          },
+        ];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt(text) {
+        oldSessionPrompts.push(text);
+      },
+      async abort() {},
+      dispose() {
+        oldSessionDisposals += 1;
+      },
+    };
+    const newSession: PiSessionPort = {
+      activeBranch() {
+        return [];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt(text) {
+        newSessionPrompts.push(text);
+      },
+      async abort() {},
+      dispose() {},
+    };
+    const creationModes: string[] = [];
+    const engine = new PiAgentEngine("/workspace", async (_workspace, mode) => {
+      creationModes.push(mode);
+      return mode === "new" ? newSession : oldSession;
+    });
+
+    expect(await engine.restore()).toHaveLength(1);
+    await engine.newSession();
+    await engine.prompt("Fresh context");
+
+    expect(creationModes).toEqual(["continue", "new"]);
+    expect(oldSessionDisposals).toBe(1);
+    expect(oldSessionPrompts).toEqual([]);
+    expect(newSessionPrompts).toEqual(["Fresh context"]);
+  });
+
   it("restores an interrupted historical Run as failed", async () => {
     const session: PiSessionPort = {
       activeBranch() {
