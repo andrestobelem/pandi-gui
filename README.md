@@ -41,7 +41,7 @@ npm run commit-stage
 
 It runs formatting/lint checks, type checking, deterministic tests and the dependency audit before packaging once. It then writes the packaged macOS candidate and `manifest.json` to `candidate/`; the manifest binds the archive to the full commit SHA and its SHA-256 digest.
 
-GitHub Actions runs this command for pull requests and pushes to `main`, cancels superseded branch runs and uploads the candidate for 14 days. The current Continuous Delivery boundary ends at an unsigned macOS x64 candidate. Signing, notarization, multi-platform packages and release promotion require separate decisions and credentials; later stages must consume this candidate rather than rebuild it.
+GitHub Actions runs this command for pull requests and pushes to `main`, cancels superseded branch runs and uploads the candidate for 14 days. The current Continuous Delivery boundary ends at an unsigned macOS ARM64 candidate. Signing, notarization, multi-platform packages and release promotion require separate decisions and credentials; later stages must consume this candidate rather than rebuild it.
 
 A real-Pi smoke check remains manual: start the default application, submit `Reply exactly PANDI_SMOKE and do not use tools`, and observe `PANDI_SMOKE` in the transcript. This verifies the packaged renderer, preload, Electron IPC, utility process, Pi session and model stream together.
 
