@@ -1,2 +1,3 @@
-# bun-ts
-bun-ts
+# pandi-gui
+
+Un harness de agentes de programación con GUI, extensible y hackeable.
