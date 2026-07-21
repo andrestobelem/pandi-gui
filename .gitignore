@@ -11,6 +11,7 @@ lerna-debug.log*
 
 # Electron Forge and Vite build output
 .vite/
+candidate/
 out/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)

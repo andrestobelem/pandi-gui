@@ -19,7 +19,11 @@
     "typecheck": "tsc --noEmit",
     "check": "biome check .",
     "check:write": "biome check --write .",
-    "verify": "npm run check && npm run typecheck && npm test && npm run package"
+    "audit": "env -u npm_config_allow_scripts npm audit --audit-level=moderate",
+    "candidate": "node scripts/create-candidate.mts",
+    "commit-stage:checks": "npm run check && npm run typecheck && npm test && npm run audit",
+    "commit-stage": "npm run commit-stage:checks && npm run package && npm run candidate",
+    "verify": "npm run commit-stage"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.80.10",
@@ -50,5 +54,10 @@
     "typescript": "~5.9.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "fsevents": false,
+    "@google/genai": false,
+    "protobufjs": false
   }
 }

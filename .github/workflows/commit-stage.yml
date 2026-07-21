@@ -1,0 +1,85 @@
+name: Commit stage
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commit-stage:
+    name: Verify and package
+    runs-on: macos-15
+    timeout-minutes: 10
+    env:
+      CI: true
+      PANDI_AGENT_ENGINE: deterministic
+    steps:
+      - name: Start timer
+        id: timer
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Set up npm
+        run: npm install --global npm@12.0.1
+
+      - name: Install dependencies from lockfile
+        run: npm ci
+
+      - name: Run commit stage
+        run: npm run commit-stage
+
+      - name: Upload immutable candidate
+        id: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pandi-gui-${{ github.sha }}-darwin-x64
+          path: candidate/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Summarize candidate
+        env:
+          ARTIFACT_DIGEST: ${{ steps.upload.outputs.artifact-digest }}
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          candidate_digest=$(node -p "require('./candidate/manifest.json').sha256")
+          {
+            echo "## Commit-stage candidate"
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Candidate SHA-256 | \`${candidate_digest}\` |"
+            echo "| Upload SHA-256 | \`${ARTIFACT_DIGEST}\` |"
+            echo "| Artifact | [download](${ARTIFACT_URL}) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report duration
+        if: ${{ always() }}
+        env:
+          JOB_STATUS: ${{ job.status }}
+          STARTED_AT: ${{ steps.timer.outputs.epoch }}
+        run: |
+          elapsed_seconds=$(($(date +%s) - STARTED_AT))
+          echo "Commit stage ${JOB_STATUS} after ${elapsed_seconds}s"
+          {
+            echo
+            echo "Commit stage **${JOB_STATUS}** after **${elapsed_seconds}s**."
+          } >> "$GITHUB_STEP_SUMMARY"
