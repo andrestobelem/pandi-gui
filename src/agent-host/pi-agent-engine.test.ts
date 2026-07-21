@@ -13,6 +13,7 @@ describe("Pi agent engine adapter", () => {
     const prompts: string[] = [];
     let sessionCreations = 0;
     const session: PiSessionPort = {
+      sessionId: "current-session",
       activeBranch() {
         return [
           {
@@ -102,6 +103,7 @@ describe("Pi agent engine adapter", () => {
     const newSessionPrompts: string[] = [];
     let oldSessionDisposals = 0;
     const oldSession: PiSessionPort = {
+      sessionId: "old-session",
       activeBranch() {
         return [
           {
@@ -123,6 +125,7 @@ describe("Pi agent engine adapter", () => {
       },
     };
     const newSession: PiSessionPort = {
+      sessionId: "new-session",
       activeBranch() {
         return [];
       },
@@ -151,8 +154,138 @@ describe("Pi agent engine adapter", () => {
     expect(newSessionPrompts).toEqual(["Fresh context"]);
   });
 
+  it("lists Sessions and reopens one with its model context", async () => {
+    const openedPrompts: string[] = [];
+    let oldSessionDisposals = 0;
+    const oldSession: PiSessionPort = {
+      sessionId: "current-session",
+      activeBranch() {
+        return [];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt() {},
+      async abort() {},
+      dispose() {
+        oldSessionDisposals += 1;
+      },
+    };
+    const openedSession: PiSessionPort = {
+      sessionId: "prior-session",
+      activeBranch() {
+        return [
+          {
+            type: "message",
+            id: "user-1",
+            message: { role: "user", content: "Prior Prompt" },
+          },
+          {
+            type: "message",
+            id: "assistant-1",
+            message: {
+              role: "assistant",
+              content: [{ type: "text", text: "Prior Response" }],
+              stopReason: "stop",
+            },
+          },
+        ];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt(text) {
+        openedPrompts.push(text);
+      },
+      async abort() {},
+      dispose() {},
+    };
+    const requests: string[] = [];
+    const engine = new PiAgentEngine(
+      "/workspace",
+      async (_workspace, mode, sessionId) => {
+        requests.push(`${mode}:${sessionId ?? ""}`);
+        return mode === "open" ? openedSession : oldSession;
+      },
+      async () => [
+        {
+          id: "prior-session",
+          title: "Prior Prompt",
+          modifiedAt: "2026-03-22T12:00:00.000Z",
+        },
+        {
+          id: "current-session",
+          title: "Current Prompt",
+          modifiedAt: "2026-03-22T13:00:00.000Z",
+        },
+      ],
+    );
+
+    expect(await engine.listSessions()).toEqual([
+      {
+        id: "prior-session",
+        title: "Prior Prompt",
+        modifiedAt: "2026-03-22T12:00:00.000Z",
+        isActive: false,
+      },
+      {
+        id: "current-session",
+        title: "Current Prompt",
+        modifiedAt: "2026-03-22T13:00:00.000Z",
+        isActive: true,
+      },
+    ]);
+    expect(await engine.openSession("prior-session")).toEqual([
+      {
+        prompt: "Prior Prompt",
+        items: [{ type: "response", text: "Prior Response" }],
+        status: "settled",
+      },
+    ]);
+    await engine.prompt("Continue prior context");
+
+    expect(requests).toEqual(["continue:", "open:prior-session"]);
+    expect(oldSessionDisposals).toBe(1);
+    expect(openedPrompts).toEqual(["Continue prior context"]);
+  });
+
+  it("keeps the active Session when a requested Session cannot open", async () => {
+    const prompts: string[] = [];
+    let disposals = 0;
+    const currentSession: PiSessionPort = {
+      sessionId: "current-session",
+      activeBranch() {
+        return [];
+      },
+      subscribe() {
+        return () => {};
+      },
+      async prompt(text) {
+        prompts.push(text);
+      },
+      async abort() {},
+      dispose() {
+        disposals += 1;
+      },
+    };
+    const engine = new PiAgentEngine("/workspace", async (_workspace, mode) => {
+      if (mode === "open") throw new Error("Unknown Workspace Session");
+      return currentSession;
+    });
+    await engine.restore();
+
+    await expect(engine.openSession("missing-session")).rejects.toThrow(
+      "Unknown Workspace Session",
+    );
+    await engine.prompt("Keep current context");
+
+    expect(disposals).toBe(0);
+    expect(prompts).toEqual(["Keep current context"]);
+  });
+
   it("restores an interrupted historical Run as failed", async () => {
     const session: PiSessionPort = {
+      sessionId: "interrupted-session",
       activeBranch() {
         return [
           {
@@ -221,6 +354,7 @@ describe("Pi agent engine adapter", () => {
     const prompts: string[] = [];
     let listener: (event: unknown) => void = () => {};
     const session: PiSessionPort = {
+      sessionId: "event-session",
       activeBranch() {
         return [];
       },
@@ -288,6 +422,7 @@ describe("Pi agent engine adapter", () => {
     const oversizedName = "n".repeat(AGENT_TOOL_NAME_MAX_LENGTH + 1);
     const oversizedText = "x".repeat(AGENT_TOOL_TEXT_MAX_LENGTH + 1);
     const session: PiSessionPort = {
+      sessionId: "bounded-session",
       activeBranch() {
         return [];
       },

@@ -5,7 +5,10 @@ import {
   useRef,
   useState,
 } from "react";
-import type { TranscriptRun as RestoredRun } from "../protocol/agent-protocol";
+import type {
+  TranscriptRun as RestoredRun,
+  SessionSummary,
+} from "../protocol/agent-protocol";
 import "../protocol/pandi-api";
 import { MarkdownResponse } from "./MarkdownResponse";
 
@@ -167,8 +170,10 @@ export function App() {
   const [input, setInput] = useState("");
   const [workspaceName, setWorkspaceName] = useState("Current Workspace");
   const [runs, setRuns] = useState<TranscriptRun[]>([]);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [isRestoring, setIsRestoring] = useState(true);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [openingSessionId, setOpeningSessionId] = useState<string>();
   const [isRunning, setIsRunning] = useState(false);
   const transcriptEnd = useRef<HTMLDivElement>(null);
 
@@ -193,14 +198,27 @@ export function App() {
           setRuns([]);
           setInput("");
           setIsCreatingSession(false);
+          setOpeningSessionId(undefined);
           setIsRestoring(false);
           setIsRunning(false);
+          window.pandi.listSessions();
           break;
         case "session.restored":
           setRuns(restoreRuns(event.runs));
           setIsCreatingSession(false);
           setIsRestoring(false);
           setIsRunning(false);
+          break;
+        case "sessions.listed":
+          setSessions(event.sessions);
+          break;
+        case "session.opened":
+          setRuns(restoreRuns(event.runs));
+          setInput("");
+          setOpeningSessionId(undefined);
+          setIsRestoring(false);
+          setIsRunning(false);
+          window.pandi.listSessions();
           break;
         case "agent.started":
           setIsRestoring(false);
@@ -249,6 +267,7 @@ export function App() {
           break;
         case "agent.failed":
           setIsCreatingSession(false);
+          setOpeningSessionId(undefined);
           setIsRestoring(false);
           setRuns((current) =>
             updateLatestRun(current, (run) => ({
@@ -267,10 +286,12 @@ export function App() {
             })),
           );
           setIsRunning(false);
+          window.pandi.listSessions();
           break;
       }
     });
     window.pandi.restore();
+    window.pandi.listSessions();
     return unsubscribe;
   }, []);
 
@@ -290,10 +311,19 @@ export function App() {
   }, [runs]);
 
   function startNewSession(): void {
-    if (isRestoring || isCreatingSession || isRunning) return;
+    if (isRestoring || isCreatingSession || openingSessionId || isRunning)
+      return;
 
     setIsCreatingSession(true);
     window.pandi.newSession();
+  }
+
+  function openSession(id: string): void {
+    if (isRestoring || isCreatingSession || openingSessionId || isRunning)
+      return;
+
+    setOpeningSessionId(id);
+    window.pandi.openSession(id);
   }
 
   function submitOnEnter(event: ReactKeyboardEvent<HTMLTextAreaElement>): void {
@@ -364,6 +394,32 @@ export function App() {
                 <small>{isRunning ? "Run in progress" : "Ready"}</small>
               </span>
             </div>
+            {sessions.length > 0 && (
+              <fieldset className="session-history">
+                <legend className="sr-only">Workspace Sessions</legend>
+                {sessions.map((session) => (
+                  <button
+                    aria-current={session.isActive ? "page" : undefined}
+                    className="session-history-item"
+                    disabled={
+                      session.isActive ||
+                      isRestoring ||
+                      isCreatingSession ||
+                      openingSessionId !== undefined ||
+                      isRunning
+                    }
+                    key={session.id}
+                    onClick={() => openSession(session.id)}
+                    type="button"
+                  >
+                    <strong>{session.title}</strong>
+                    <time dateTime={session.modifiedAt}>
+                      {new Date(session.modifiedAt).toLocaleDateString()}
+                    </time>
+                  </button>
+                ))}
+              </fieldset>
+            )}
           </div>
         </nav>
 
@@ -385,7 +441,12 @@ export function App() {
           <div className="session-header-actions">
             <button
               className="new-session-button"
-              disabled={isRestoring || isCreatingSession || isRunning}
+              disabled={
+                isRestoring ||
+                isCreatingSession ||
+                openingSessionId !== undefined ||
+                isRunning
+              }
               onClick={startNewSession}
               type="button"
             >
@@ -395,9 +456,11 @@ export function App() {
               <span className="status-dot" />
               {isCreatingSession
                 ? "Starting Session…"
-                : isRunning
-                  ? "Running"
-                  : "Agent ready"}
+                : openingSessionId
+                  ? "Opening Session…"
+                  : isRunning
+                    ? "Running"
+                    : "Agent ready"}
             </span>
           </div>
         </header>

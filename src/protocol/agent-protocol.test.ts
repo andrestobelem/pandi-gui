@@ -26,6 +26,52 @@ describe("agent host wire protocol", () => {
     expect(parseAgentHostEvent(event)).toEqual(event);
   });
 
+  it("lists and opens Workspace Sessions with bounded opaque IDs", () => {
+    const listCommand = { version: 1, type: "session.list" };
+    const openCommand = {
+      version: 1,
+      type: "session.open",
+      id: "session-1",
+    };
+    const listedEvent = {
+      version: 1,
+      type: "sessions.listed",
+      sessions: [
+        {
+          id: "session-1",
+          title: "Inspect the repository",
+          modifiedAt: "2026-03-22T12:00:00.000Z",
+          isActive: false,
+        },
+      ],
+    };
+    const openedEvent = {
+      version: 1,
+      type: "session.opened",
+      id: "session-1",
+      runs: [],
+    };
+
+    expect(parseAgentHostCommand(listCommand)).toEqual(listCommand);
+    expect(parseAgentHostCommand(openCommand)).toEqual(openCommand);
+    expect(parseAgentHostEvent(listedEvent)).toEqual(listedEvent);
+    expect(parseAgentHostEvent(openedEvent)).toEqual(openedEvent);
+    expect(() =>
+      parseAgentHostCommand({
+        version: 1,
+        type: "session.open",
+        id: "x".repeat(201),
+      }),
+    ).toThrow();
+    expect(() =>
+      parseAgentHostCommand({
+        version: 1,
+        type: "session.open",
+        id: "/Users/developer/session.jsonl",
+      }),
+    ).toThrow();
+  });
+
   it("accepts Session restoration across the wire", () => {
     const command = { version: 1, type: "session.restore" };
     const event = {

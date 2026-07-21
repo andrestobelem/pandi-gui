@@ -36,8 +36,27 @@ export class AgentHostController {
       return;
     }
 
-    await this.engine.newSession();
-    this.publish({ version: 1, type: "session.created" });
+    if (command.type === "session.new") {
+      await this.engine.newSession();
+      this.publish({ version: 1, type: "session.created" });
+      return;
+    }
+
+    if (command.type === "session.list") {
+      this.publish({
+        version: 1,
+        type: "sessions.listed",
+        sessions: await this.engine.listSessions(),
+      });
+      return;
+    }
+
+    this.publish({
+      version: 1,
+      type: "session.opened",
+      id: command.id,
+      runs: await this.engine.openSession(command.id),
+    });
   }
 
   async dispose(): Promise<void> {

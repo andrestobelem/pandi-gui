@@ -28,7 +28,7 @@ The current directory becomes the agent workspace. To exercise the UI without mo
 PANDI_AGENT_ENGINE=deterministic npm start
 ```
 
-Enter a prompt and observe the Response stream as rendered Markdown. Use **Cancel** or press **Escape** to abort an active Response. When Pandi starts again in the same Workspace, it restores its latest Session and Transcript; Pandi sessions are stored separately from sessions created with the Pi CLI. Use **New Session** while the Coding Agent is idle to clear the Transcript and start with fresh model context; the previous Session remains stored for future session-management features.
+Enter a prompt and observe the Response stream as rendered Markdown. Use **Cancel** or press **Escape** to abort an active Response. When Pandi starts again in the same Workspace, it restores its latest Session and Transcript; Pandi sessions are stored separately from sessions created with the Pi CLI. Use **New Session** while the Coding Agent is idle to clear the Transcript and start with fresh model context. Persisted Sessions remain available in the sidebar and can be reopened while the Coding Agent is idle.
 
 ## Markdown artifacts
 

@@ -29,6 +29,8 @@ describe("Workspace Session", () => {
     window.pandi = {
       restore: vi.fn(),
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       prompt: vi.fn(),
       abort: vi.fn(),
       subscribe: () => () => {},
@@ -54,6 +56,8 @@ describe("Workspace Session", () => {
     window.pandi = {
       restore,
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       prompt: vi.fn(),
       abort: vi.fn(),
       workspace: async () => ({ version: 1, name: "pandi-gui" }),
@@ -119,6 +123,8 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession,
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({
           version: 1,
@@ -160,11 +166,94 @@ describe("Workspace Session", () => {
     expect((startNewSession as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("reopens a previous Session only after Agent Host confirmation", () => {
+    const openSession = vi.fn();
+    let receive: (event: AgentHostEvent) => void = () => {};
+    let listRequests = 0;
+    window.pandi = {
+      restore() {
+        receive({
+          version: 1,
+          type: "session.restored",
+          runs: [
+            {
+              prompt: "Current Prompt",
+              status: "settled",
+              items: [{ type: "response", text: "Current Response" }],
+            },
+          ],
+        });
+      },
+      newSession: vi.fn(),
+      listSessions() {
+        listRequests += 1;
+        if (listRequests === 1) {
+          receive({
+            version: 1,
+            type: "sessions.listed",
+            sessions: [
+              {
+                id: "prior-session",
+                title: "Prior Prompt",
+                modifiedAt: "2026-03-22T12:00:00.000Z",
+                isActive: false,
+              },
+            ],
+          });
+        }
+      },
+      openSession,
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+    render(<App />);
+
+    const priorSession = screen.getByRole("button", {
+      name: /Prior Prompt/,
+    });
+    act(() => receive({ version: 1, type: "agent.started" }));
+    expect((priorSession as HTMLButtonElement).disabled).toBe(true);
+    act(() => receive({ version: 1, type: "agent.settled" }));
+    expect((priorSession as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(priorSession);
+
+    expect(openSession).toHaveBeenCalledWith("prior-session");
+    expect(screen.getByText("Current Prompt")).toBeTruthy();
+    expect((priorSession as HTMLButtonElement).disabled).toBe(true);
+
+    act(() =>
+      receive({
+        version: 1,
+        type: "session.opened",
+        id: "prior-session",
+        runs: [
+          {
+            prompt: "Prior Prompt",
+            status: "settled",
+            items: [{ type: "response", text: "Prior Response" }],
+          },
+        ],
+      }),
+    );
+
+    expect(screen.queryByText("Current Prompt")).toBeNull();
+    expect(screen.getAllByText("Prior Prompt")).toHaveLength(2);
+    expect(screen.getByText("Prior Response")).toBeTruthy();
+    expect(listRequests).toBe(3);
+  });
+
   it("submits a Prompt and renders a streamed Response", () => {
     const prompt = vi.fn();
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -200,6 +289,8 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({
           version: 1,
@@ -264,6 +355,8 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -338,6 +431,8 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -386,6 +481,8 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },
@@ -438,6 +535,8 @@ describe("Workspace Session", () => {
     let receive: (event: AgentHostEvent) => void = () => {};
     window.pandi = {
       newSession: vi.fn(),
+      listSessions: vi.fn(),
+      openSession: vi.fn(),
       restore() {
         receive({ version: 1, type: "session.restored", runs: [] });
       },

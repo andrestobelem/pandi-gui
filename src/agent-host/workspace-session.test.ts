@@ -6,12 +6,15 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   continueWorkspaceSession,
   createWorkspaceSession,
+  listWorkspaceSessions,
+  openWorkspaceSession,
 } from "./workspace-session";
 
 const temporaryDirectories: string[] = [];
 
 function persistProbe(session: SessionManager, source: string): void {
   session.appendCustomEntry("probe", { source });
+  session.appendMessage({ role: "user", content: source, timestamp: 0 });
   session.appendMessage({
     role: "assistant",
     content: [{ type: "text", text: "Persisted" }],
@@ -97,5 +100,63 @@ describe("Pandi Workspace Session storage", () => {
       join(root, "pandi"),
     );
     expect(otherWorkspaceSession.getEntries()).toEqual([]);
+  });
+
+  it("lists and opens only known Session IDs in the Workspace", async () => {
+    const root = await mkdtemp(join(tmpdir(), "pandi-session-list-"));
+    temporaryDirectories.push(root);
+    const workspaceA = join(root, "workspace-a");
+    const workspaceB = join(root, "workspace-b");
+    await Promise.all([mkdir(workspaceA), mkdir(workspaceB)]);
+    const storageRoot = join(root, "pandi");
+    const first = createWorkspaceSession(
+      SessionManager,
+      workspaceA,
+      storageRoot,
+    );
+    persistProbe(first, "Inspect README.md");
+    const second = createWorkspaceSession(
+      SessionManager,
+      workspaceA,
+      storageRoot,
+    );
+    persistProbe(second, "Fix the composer");
+    const otherWorkspace = createWorkspaceSession(
+      SessionManager,
+      workspaceB,
+      storageRoot,
+    );
+    persistProbe(otherWorkspace, "Do not expose me");
+
+    const sessions = await listWorkspaceSessions(
+      SessionManager,
+      workspaceA,
+      storageRoot,
+    );
+
+    expect(sessions.map(({ id, title }) => ({ id, title }))).toEqual(
+      expect.arrayContaining([
+        { id: first.getSessionId(), title: "Inspect README.md" },
+        { id: second.getSessionId(), title: "Fix the composer" },
+      ]),
+    );
+    expect(sessions).toHaveLength(2);
+    expect(sessions[0]).not.toHaveProperty("path");
+
+    const opened = await openWorkspaceSession(
+      SessionManager,
+      workspaceA,
+      storageRoot,
+      first.getSessionId(),
+    );
+    expect(opened.getEntries()).toEqual(first.getEntries());
+    await expect(
+      openWorkspaceSession(
+        SessionManager,
+        workspaceA,
+        storageRoot,
+        otherWorkspace.getSessionId(),
+      ),
+    ).rejects.toThrow("Unknown Workspace Session");
   });
 });

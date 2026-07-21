@@ -158,6 +158,63 @@ svg {
   box-shadow: 0 0.3rem 1rem rgb(69 74 97 / 5%);
 }
 
+.session-history {
+  display: grid;
+  min-width: 0;
+  max-height: 14rem;
+  padding: 0.1rem;
+  margin: 0;
+  overflow-y: auto;
+  border: 0;
+  gap: 0.35rem;
+}
+
+.session-history-item {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+  padding: 0.55rem 0.65rem;
+  color: #666c80;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  cursor: pointer;
+}
+
+.session-history-item:hover:not(:disabled) {
+  background: rgb(255 255 255 / 55%);
+  border-color: #e0e3ea;
+}
+
+.session-history-item[aria-current="page"] {
+  background: rgb(255 255 255 / 42%);
+}
+
+.session-history-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.session-history-item strong,
+.session-history-item time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-history-item strong {
+  color: #555b70;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.session-history-item time {
+  color: #9a9faf;
+  font-size: 0.66rem;
+}
+
 .session-indicator,
 .status-dot {
   flex: 0 0 auto;

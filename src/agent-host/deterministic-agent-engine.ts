@@ -1,4 +1,4 @@
-import type { TranscriptRun } from "../protocol/agent-protocol";
+import type { SessionSummary, TranscriptRun } from "../protocol/agent-protocol";
 import type { AgentEngine, AgentEventListener } from "./agent-engine";
 
 export class DeterministicAgentEngine implements AgentEngine {
@@ -20,6 +20,14 @@ export class DeterministicAgentEngine implements AgentEngine {
   }
 
   async newSession(): Promise<void> {}
+
+  async listSessions(): Promise<SessionSummary[]> {
+    return [];
+  }
+
+  async openSession(): Promise<TranscriptRun[]> {
+    throw new Error("Unknown Workspace Session");
+  }
 
   async prompt(text: string): Promise<void> {
     const controller = new AbortController();

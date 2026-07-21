@@ -23,6 +23,19 @@ const api: PandiApi = {
       type: "session.new",
     });
   },
+  listSessions() {
+    ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
+      version: 1,
+      type: "session.list",
+    });
+  },
+  openSession(id) {
+    ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
+      version: 1,
+      type: "session.open",
+      id,
+    });
+  },
   prompt(text) {
     ipcRenderer.send(AGENT_COMMAND_CHANNEL, {
       version: 1,

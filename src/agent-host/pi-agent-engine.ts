@@ -4,15 +4,20 @@ import {
   AGENT_TOOL_NAME_MAX_LENGTH,
   AGENT_TOOL_TEXT_MAX_LENGTH,
   type AgentHostEvent,
+  type SessionSummary,
   type TranscriptRun,
 } from "../protocol/agent-protocol";
 import type { AgentEngine, AgentEventListener } from "./agent-engine";
 import {
   continueWorkspaceSession,
   createWorkspaceSession,
+  listWorkspaceSessions,
+  openWorkspaceSession,
+  type WorkspaceSessionInfo,
 } from "./workspace-session";
 
 export interface PiSessionPort {
+  readonly sessionId: string;
   activeBranch(): unknown[];
   subscribe(listener: (event: unknown) => void): () => void;
   prompt(text: string): Promise<void>;
@@ -20,25 +25,30 @@ export interface PiSessionPort {
   dispose(): void;
 }
 
-type PiSessionMode = "continue" | "new";
+type PiSessionMode = "continue" | "new" | "open";
 type PiSessionFactory = (
   workspace: string,
   mode: PiSessionMode,
+  sessionId?: string,
 ) => Promise<PiSessionPort>;
+type PiSessionLister = (workspace: string) => Promise<WorkspaceSessionInfo[]>;
 
 export class PiAgentEngine implements AgentEngine {
   readonly #listeners = new Set<AgentEventListener>();
   readonly #workspace: string;
   readonly #createSession: PiSessionFactory;
+  readonly #listSessions: PiSessionLister;
   #sessionPromise?: Promise<PiSessionPort>;
   #unsubscribeFromSession?: () => void;
 
   constructor(
     workspace: string,
     createSession: PiSessionFactory = createPiSession,
+    listSessions: PiSessionLister = listPiSessions,
   ) {
     this.#workspace = workspace;
     this.#createSession = createSession;
+    this.#listSessions = listSessions;
   }
 
   subscribe(listener: AgentEventListener): () => void {
@@ -51,13 +61,20 @@ export class PiAgentEngine implements AgentEngine {
   }
 
   async newSession(): Promise<void> {
-    this.#unsubscribeFromSession?.();
-    this.#unsubscribeFromSession = undefined;
-    if (this.#sessionPromise) {
-      (await this.#sessionPromise).dispose();
-    }
-    this.#sessionPromise = undefined;
-    await this.#session("new");
+    await this.#replaceSession("new");
+  }
+
+  async listSessions(): Promise<SessionSummary[]> {
+    const activeSessionId = (await this.#session()).sessionId;
+    return (await this.#listSessions(this.#workspace)).map((session) => ({
+      ...session,
+      isActive: session.id === activeSessionId,
+    }));
+  }
+
+  async openSession(id: string): Promise<TranscriptRun[]> {
+    const session = await this.#replaceSession("open", id);
+    return restoredTranscript(session.activeBranch());
   }
 
   async prompt(text: string): Promise<void> {
@@ -89,16 +106,46 @@ export class PiAgentEngine implements AgentEngine {
     this.#listeners.clear();
   }
 
-  async #session(mode: PiSessionMode = "continue"): Promise<PiSessionPort> {
+  async #replaceSession(
+    mode: Exclude<PiSessionMode, "continue">,
+    sessionId?: string,
+  ): Promise<PiSessionPort> {
+    const nextSession = await this.#createSession(
+      this.#workspace,
+      mode,
+      sessionId,
+    );
+    const previousSession = this.#sessionPromise
+      ? await this.#sessionPromise
+      : undefined;
+    this.#unsubscribeFromSession?.();
+    this.#sessionPromise = Promise.resolve(nextSession);
+    this.#subscribeToSession(nextSession);
+    previousSession?.dispose();
+    return nextSession;
+  }
+
+  async #session(
+    mode: PiSessionMode = "continue",
+    sessionId?: string,
+  ): Promise<PiSessionPort> {
     if (!this.#sessionPromise) {
-      this.#sessionPromise = this.#createSession(this.#workspace, mode);
+      this.#sessionPromise = this.#createSession(
+        this.#workspace,
+        mode,
+        sessionId,
+      );
       const session = await this.#sessionPromise;
-      this.#unsubscribeFromSession = session.subscribe((event) => {
-        this.#receivePiEvent(event);
-      });
+      this.#subscribeToSession(session);
     }
 
     return this.#sessionPromise;
+  }
+
+  #subscribeToSession(session: PiSessionPort): void {
+    this.#unsubscribeFromSession = session.subscribe((event) => {
+      this.#receivePiEvent(event);
+    });
   }
 
   #receivePiEvent(event: unknown): void {
@@ -346,6 +393,7 @@ function toolResultText(result: unknown): string {
 async function createPiSession(
   workspace: string,
   mode: PiSessionMode,
+  sessionId?: string,
 ): Promise<PiSessionPort> {
   const {
     createAgentSession,
@@ -367,12 +415,22 @@ async function createPiSession(
   });
   await resourceLoader.reload();
 
-  const sessionStorageRoot =
-    process.env.PANDI_SESSION_ROOT ?? join(agentDir, "pandi-sessions");
+  const sessionStorageRoot = workspaceSessionStorageRoot(agentDir);
   const sessionManager =
     mode === "new"
       ? createWorkspaceSession(SessionManager, workspace, sessionStorageRoot)
-      : continueWorkspaceSession(SessionManager, workspace, sessionStorageRoot);
+      : mode === "open" && sessionId
+        ? await openWorkspaceSession(
+            SessionManager,
+            workspace,
+            sessionStorageRoot,
+            sessionId,
+          )
+        : continueWorkspaceSession(
+            SessionManager,
+            workspace,
+            sessionStorageRoot,
+          );
   const { session } = await createAgentSession({
     agentDir,
     cwd: workspace,
@@ -383,6 +441,7 @@ async function createPiSession(
   });
 
   return {
+    sessionId: session.sessionId,
     activeBranch() {
       return session.sessionManager.getBranch();
     },
@@ -399,6 +458,23 @@ async function createPiSession(
       session.dispose();
     },
   };
+}
+
+async function listPiSessions(
+  workspace: string,
+): Promise<WorkspaceSessionInfo[]> {
+  const { getAgentDir, SessionManager } = await import(
+    "@earendil-works/pi-coding-agent"
+  );
+  return listWorkspaceSessions(
+    SessionManager,
+    workspace,
+    workspaceSessionStorageRoot(getAgentDir()),
+  );
+}
+
+function workspaceSessionStorageRoot(agentDir: string): string {
+  return process.env.PANDI_SESSION_ROOT ?? join(agentDir, "pandi-sessions");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

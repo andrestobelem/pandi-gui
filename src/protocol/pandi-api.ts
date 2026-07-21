@@ -17,6 +17,8 @@ export function parseWorkspaceInfo(value: unknown): WorkspaceInfo {
 export interface PandiApi {
   restore(): void;
   newSession(): void;
+  listSessions(): void;
+  openSession(id: string): void;
   prompt(text: string): void;
   abort(): void;
   subscribe(listener: (event: AgentHostEvent) => void): () => void;
