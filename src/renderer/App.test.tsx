@@ -138,13 +138,76 @@ describe("Workspace Session", () => {
     fireEvent.keyDown(promptInput, { key: "Enter" });
     act(() => {
       receive({ version: 1, type: "agent.started" });
-      receive({ version: 1, type: "message.delta", text: "Hi " });
-      receive({ version: 1, type: "message.delta", text: "there" });
+      receive({ version: 1, type: "message.delta", text: "**Hi " });
+      receive({ version: 1, type: "message.delta", text: "there**" });
       receive({ version: 1, type: "agent.settled" });
     });
 
     expect(prompt).toHaveBeenCalledWith("Hello");
-    expect(screen.getByText("Hi there")).toBeTruthy();
+    expect(screen.getByText("Hi there").tagName).toBe("STRONG");
+  });
+
+  it("renders restored Markdown without active HTML, links, or images", () => {
+    let receive: (event: AgentHostEvent) => void = () => {};
+    window.pandi = {
+      restore() {
+        receive({
+          version: 1,
+          type: "session.restored",
+          runs: [
+            {
+              prompt: "Show Markdown",
+              status: "settled",
+              items: [
+                {
+                  type: "response",
+                  text: [
+                    "# Result",
+                    "",
+                    "| Name | State |",
+                    "| --- | --- |",
+                    "| Pandi | **Ready** |",
+                    "",
+                    "```ts",
+                    "const ready = true;",
+                    "```",
+                    "",
+                    "[unsafe](javascript:alert(1))",
+                    "",
+                    '<img src="https://example.com/tracker.png" onerror="alert(1)">',
+                    "<script>alert('unsafe')</script>",
+                  ].join("\n"),
+                },
+              ],
+            },
+          ],
+        });
+      },
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+
+    const { container } = render(<App />);
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Result" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(
+      container.querySelector(".response-markdown strong")?.textContent,
+    ).toBe("Ready");
+    expect(container.querySelector("pre code.language-ts")?.textContent).toBe(
+      "const ready = true;\n",
+    );
+    expect(screen.getByText("unsafe").closest("a")).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("script")).toBeNull();
+    expect(screen.getByText(/<img src=/)).toBeTruthy();
   });
 
   it("renders running and completed read Tool Activity", () => {
@@ -208,6 +271,7 @@ describe("Workspace Session", () => {
     });
     expect(within(completedActivity).getByText("Completed")).toBeTruthy();
     expect(within(completedActivity).getByText("# Pandi GUI")).toBeTruthy();
+    expect(within(completedActivity).queryByRole("heading")).toBeNull();
 
     const transcriptText =
       screen.getByRole("region", { name: "Transcript" }).textContent ?? "";

@@ -426,10 +426,127 @@ svg {
 }
 
 .agent-message {
+  min-width: 0;
   padding: 1rem;
   background: rgb(255 255 255 / 58%);
   border: 1px solid #e1e3e9;
   border-radius: 0.95rem;
+}
+
+.response-markdown {
+  min-width: 0;
+  color: #484e63;
+  font-size: 0.91rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.response-markdown > :first-child {
+  margin-top: 0;
+}
+
+.response-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.response-markdown h2,
+.response-markdown h3,
+.response-markdown h4,
+.response-markdown h5,
+.response-markdown h6 {
+  margin: 1.35em 0 0.5em;
+  color: #30364b;
+  line-height: 1.3;
+}
+
+.response-markdown h2 {
+  font-size: 1.2rem;
+}
+
+.response-markdown h3 {
+  font-size: 1.05rem;
+}
+
+.response-markdown p,
+.response-markdown ul,
+.response-markdown ol,
+.response-markdown blockquote,
+.response-markdown pre,
+.response-markdown table {
+  margin: 0.75em 0;
+}
+
+.response-markdown ul,
+.response-markdown ol {
+  padding-left: 1.5rem;
+}
+
+.response-markdown li + li {
+  margin-top: 0.25em;
+}
+
+.response-markdown blockquote {
+  padding: 0.15rem 0 0.15rem 0.85rem;
+  color: #666d83;
+  border-left: 3px solid #cbc5eb;
+}
+
+.response-markdown code {
+  padding: 0.12rem 0.3rem;
+  color: #4f467c;
+  font:
+    0.82em / 1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  background: #eeecf6;
+  border-radius: 0.3rem;
+}
+
+.response-markdown pre {
+  max-width: 100%;
+  padding: 0.8rem 0.9rem;
+  overflow: auto;
+  background: #292c38;
+  border-radius: 0.65rem;
+}
+
+.response-markdown pre code {
+  padding: 0;
+  color: #eceef5;
+  white-space: pre;
+  background: transparent;
+}
+
+.response-markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.response-markdown th,
+.response-markdown td {
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  border: 1px solid #dfe2e9;
+}
+
+.response-markdown th {
+  color: #3f455a;
+  background: #f0f1f5;
+}
+
+.response-markdown .response-link {
+  color: #6251b5;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.18em;
+}
+
+.response-markdown .response-image-alt {
+  color: #858a9b;
+  font-style: italic;
 }
 
 .tool-activity {

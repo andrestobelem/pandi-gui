@@ -7,6 +7,7 @@ import {
 } from "react";
 import type { TranscriptRun as RestoredRun } from "../protocol/agent-protocol";
 import "../protocol/pandi-api";
+import { MarkdownResponse } from "./MarkdownResponse";
 
 type IconName = "agent" | "arrow" | "code" | "folder" | "review" | "spark";
 
@@ -451,7 +452,7 @@ export function App() {
                           </span>
                           <strong>Coding Agent</strong>
                         </div>
-                        <p>{item.text}</p>
+                        <MarkdownResponse markdown={item.text} />
                       </article>
                     ),
                   )}

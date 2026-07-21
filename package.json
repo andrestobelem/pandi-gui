@@ -28,6 +28,8 @@
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "^0.80.10",
+    "dompurify": "^3.4.12",
+    "marked": "^18.0.6",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "zod": "^4.4.3"
@@ -52,7 +54,6 @@
     "@vitejs/plugin-react": "^6.0.3",
     "electron": "^43.1.1",
     "jsdom": "^29.1.1",
-    "marked": "^18.0.6",
     "typescript": "~5.9.3",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
