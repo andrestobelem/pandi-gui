@@ -1,0 +1,53 @@
+{
+  "name": "pandi-gui",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@12.0.1",
+  "description": "Hackable desktop harness for coding agents",
+  "license": "MIT",
+  "author": "Andres Tobelem",
+  "engines": {
+    "node": ">=22.19 <23"
+  },
+  "main": ".vite/build/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check": "biome check .",
+    "check:write": "biome check --write .",
+    "verify": "npm run check && npm run typecheck && npm test && npm run package"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^4.4.3"
+  },
+  "overrides": {
+    "@electron/rebuild": "4.2.0",
+    "brace-expansion": "5.0.7",
+    "protobufjs": "7.6.5",
+    "tmp": "0.2.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
+    "@electron-forge/cli": "^7.11.2",
+    "@electron-forge/plugin-vite": "^7.11.2",
+    "@electron-forge/shared-types": "^7.11.2",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "electron": "^43.1.1",
+    "jsdom": "^29.1.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  }
+}

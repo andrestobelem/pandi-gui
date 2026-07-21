@@ -15,6 +15,7 @@ Construiremos la primera versión como una aplicación de escritorio con Electro
 ## Consecuencias
 
 - No habrá un sidecar Bun ni otro runtime JavaScript en producción; usamos el entorno oficialmente soportado por Pi y el mismo ecosistema en desarrollo y CI.
+- El toolchain queda fijado inicialmente en Node 22.23.1 y npm 12.0.1: satisface el mínimo de Pi y evita una terminación prematura observada al empaquetar con Forge 7 bajo Node 24. El runtime productivo sigue siendo el Node embebido por Electron.
 - El renderer permanecerá aislado con `nodeIntegration: false`, `contextIsolation: true` y una API preload mínima y validada.
 - El main process solo administrará ventanas, lifecycle e IPC. El agent/extension host vivirá en `utilityProcess` para poder reiniciarse y fallar sin bloquear la GUI.
 - Los paquetes de dominio y protocolo no dependerán de Electron para conservar la opción de otros clientes en el futuro.
