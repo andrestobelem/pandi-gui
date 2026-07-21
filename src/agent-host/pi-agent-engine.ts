@@ -1,3 +1,9 @@
+import {
+  AGENT_TOOL_ID_MAX_LENGTH,
+  AGENT_TOOL_NAME_MAX_LENGTH,
+  AGENT_TOOL_TEXT_MAX_LENGTH,
+  type AgentHostEvent,
+} from "../protocol/agent-protocol";
 import type { AgentEngine, AgentEventListener } from "./agent-engine";
 
 export interface PiSessionPort {
@@ -84,6 +90,38 @@ export class PiAgentEngine implements AgentEngine {
     }
 
     if (
+      event.type === "tool_execution_start" &&
+      typeof event.toolCallId === "string" &&
+      typeof event.toolName === "string"
+    ) {
+      this.#emit({
+        version: 1,
+        type: "tool.started",
+        id: boundedToolIdentifier(event.toolCallId, AGENT_TOOL_ID_MAX_LENGTH),
+        name: boundedToolIdentifier(event.toolName, AGENT_TOOL_NAME_MAX_LENGTH),
+        input: toolInputText(event.args),
+      });
+      return;
+    }
+
+    if (
+      event.type === "tool_execution_end" &&
+      typeof event.toolCallId === "string" &&
+      typeof event.toolName === "string" &&
+      typeof event.isError === "boolean"
+    ) {
+      this.#emit({
+        version: 1,
+        type: "tool.completed",
+        id: boundedToolIdentifier(event.toolCallId, AGENT_TOOL_ID_MAX_LENGTH),
+        name: boundedToolIdentifier(event.toolName, AGENT_TOOL_NAME_MAX_LENGTH),
+        result: toolResultText(event.result),
+        isError: event.isError,
+      });
+      return;
+    }
+
+    if (
       event.type === "message_update" &&
       isRecord(event.assistantMessageEvent) &&
       event.assistantMessageEvent.type === "text_delta" &&
@@ -97,11 +135,57 @@ export class PiAgentEngine implements AgentEngine {
     }
   }
 
-  #emit(event: Parameters<AgentEventListener>[0]): void {
+  #emit(event: AgentHostEvent): void {
     for (const listener of this.#listeners) {
       listener(event);
     }
   }
+}
+
+function boundedToolIdentifier(text: string, maxLength: number): string {
+  return text.slice(0, maxLength);
+}
+
+function boundedToolText(text: string): string {
+  if (text.length <= AGENT_TOOL_TEXT_MAX_LENGTH) return text;
+
+  const marker = "\n… [truncated]";
+  return `${text.slice(0, AGENT_TOOL_TEXT_MAX_LENGTH - marker.length)}${marker}`;
+}
+
+function serializedToolValue(value: unknown): string {
+  if (typeof value === "string") return boundedToolText(value);
+
+  try {
+    return boundedToolText(JSON.stringify(value) ?? String(value));
+  } catch {
+    return boundedToolText(String(value));
+  }
+}
+
+function toolInputText(args: unknown): string {
+  return serializedToolValue(args);
+}
+
+function toolResultText(result: unknown): string {
+  if (isRecord(result) && Array.isArray(result.content)) {
+    const content = result.content.map((item) => {
+      if (
+        isRecord(item) &&
+        item.type === "text" &&
+        typeof item.text === "string"
+      ) {
+        return item.text;
+      }
+      if (isRecord(item) && item.type === "image") {
+        return "[Image content omitted]";
+      }
+      return serializedToolValue(item);
+    });
+    return boundedToolText(content.join("\n"));
+  }
+
+  return serializedToolValue(result);
 }
 
 async function createPiSession(workspace: string): Promise<PiSessionPort> {
@@ -128,7 +212,7 @@ async function createPiSession(workspace: string): Promise<PiSessionPort> {
   const { session } = await createAgentSession({
     agentDir,
     cwd: workspace,
-    noTools: "all",
+    tools: ["read"],
     resourceLoader,
     sessionManager: SessionManager.create(workspace),
     settingsManager,

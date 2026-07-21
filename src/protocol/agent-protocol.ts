@@ -2,6 +2,9 @@ import { z } from "zod";
 
 export const AGENT_COMMAND_CHANNEL = "agent:command";
 export const AGENT_EVENT_CHANNEL = "agent:event";
+export const AGENT_TOOL_TEXT_MAX_LENGTH = 32_000;
+export const AGENT_TOOL_ID_MAX_LENGTH = 200;
+export const AGENT_TOOL_NAME_MAX_LENGTH = 100;
 
 const agentHostCommandSchema = z.discriminatedUnion("type", [
   z.object({
@@ -24,6 +27,21 @@ const agentHostEventSchema = z.discriminatedUnion("type", [
     version: z.literal(1),
     type: z.literal("message.delta"),
     text: z.string(),
+  }),
+  z.object({
+    version: z.literal(1),
+    type: z.literal("tool.started"),
+    id: z.string().min(1).max(AGENT_TOOL_ID_MAX_LENGTH),
+    name: z.string().min(1).max(AGENT_TOOL_NAME_MAX_LENGTH),
+    input: z.string().max(AGENT_TOOL_TEXT_MAX_LENGTH),
+  }),
+  z.object({
+    version: z.literal(1),
+    type: z.literal("tool.completed"),
+    id: z.string().min(1).max(AGENT_TOOL_ID_MAX_LENGTH),
+    name: z.string().min(1).max(AGENT_TOOL_NAME_MAX_LENGTH),
+    result: z.string().max(AGENT_TOOL_TEXT_MAX_LENGTH),
+    isError: z.boolean(),
   }),
   z.object({
     version: z.literal(1),

@@ -3,10 +3,23 @@ import "../protocol/pandi-api";
 
 type IconName = "agent" | "arrow" | "code" | "folder" | "review" | "spark";
 
+type ToolActivity = {
+  type: "tool";
+  id: string;
+  name: string;
+  input: string;
+  status: "running" | "completed" | "failed";
+  result?: string;
+};
+
+type TranscriptItem =
+  | { type: "response"; id: number; text: string }
+  | ToolActivity;
+
 type TranscriptRun = {
   id: number;
   prompt: string;
-  response: string;
+  items: TranscriptItem[];
   status: "running" | "settled" | "failed";
   error?: string;
 };
@@ -19,6 +32,70 @@ function updateLatestRun(
   if (!latest) return runs;
 
   return [...runs.slice(0, -1), update(latest)];
+}
+
+function appendResponseDelta(
+  items: TranscriptItem[],
+  text: string,
+): TranscriptItem[] {
+  const latest = items.at(-1);
+  if (latest?.type !== "response") {
+    return [...items, { type: "response", id: items.length, text }];
+  }
+
+  return [...items.slice(0, -1), { ...latest, text: latest.text + text }];
+}
+
+function completeToolActivity(
+  items: TranscriptItem[],
+  event: {
+    id: string;
+    result: string;
+    isError: boolean;
+  },
+): TranscriptItem[] {
+  return items.map((item) =>
+    item.type === "tool" && item.id === event.id
+      ? {
+          ...item,
+          result: event.result,
+          status: event.isError ? "failed" : "completed",
+        }
+      : item,
+  );
+}
+
+function ToolActivityCard({ activity }: { activity: ToolActivity }) {
+  const status = {
+    running: "Running",
+    completed: "Completed",
+    failed: "Failed",
+  }[activity.status];
+
+  return (
+    <article
+      aria-label={`${activity.name} Tool Activity`}
+      className={`tool-activity is-${activity.status}`}
+    >
+      <header className="tool-activity-header">
+        <span>
+          <Icon name="code" />
+          <strong>{activity.name}</strong>
+        </span>
+        <span className="tool-activity-status">{status}</span>
+      </header>
+      <div className="tool-activity-payload">
+        <span>Input</span>
+        <pre>{activity.input}</pre>
+      </div>
+      {activity.result !== undefined && (
+        <div className="tool-activity-payload">
+          <span>Result</span>
+          <pre>{activity.result}</pre>
+        </div>
+      )}
+    </article>
+  );
 }
 
 function Icon({ name }: { name: IconName }) {
@@ -86,7 +163,7 @@ export function App() {
             setRuns((current) =>
               updateLatestRun(current, (run) => ({
                 ...run,
-                response: "",
+                items: [],
                 status: "running",
                 error: undefined,
               })),
@@ -97,7 +174,32 @@ export function App() {
             setRuns((current) =>
               updateLatestRun(current, (run) => ({
                 ...run,
-                response: run.response + event.text,
+                items: appendResponseDelta(run.items, event.text),
+              })),
+            );
+            break;
+          case "tool.started":
+            setRuns((current) =>
+              updateLatestRun(current, (run) => ({
+                ...run,
+                items: [
+                  ...run.items,
+                  {
+                    type: "tool",
+                    id: event.id,
+                    name: event.name,
+                    input: event.input,
+                    status: "running",
+                  },
+                ],
+              })),
+            );
+            break;
+          case "tool.completed":
+            setRuns((current) =>
+              updateLatestRun(current, (run) => ({
+                ...run,
+                items: completeToolActivity(run.items, event),
               })),
             );
             break;
@@ -150,7 +252,7 @@ export function App() {
       {
         id: (current.at(-1)?.id ?? 0) + 1,
         prompt,
-        response: "",
+        items: [],
         status: "running",
       },
     ]);
@@ -268,9 +370,9 @@ export function App() {
                     </div>
                     <p>{run.prompt}</p>
                   </article>
-                  {(run.response || run.status === "running") && (
+                  {run.items.length === 0 && run.status === "running" && (
                     <article
-                      aria-live={run.status === "running" ? "polite" : "off"}
+                      aria-live="polite"
                       className="message agent-message"
                     >
                       <div className="message-author">
@@ -279,8 +381,30 @@ export function App() {
                         </span>
                         <strong>Coding Agent</strong>
                       </div>
-                      <p>{run.response || "Thinking…"}</p>
+                      <p>Thinking…</p>
                     </article>
+                  )}
+                  {run.items.map((item) =>
+                    item.type === "tool" ? (
+                      <ToolActivityCard
+                        activity={item}
+                        key={`tool-${item.id}`}
+                      />
+                    ) : (
+                      <article
+                        aria-live={run.status === "running" ? "polite" : "off"}
+                        className="message agent-message"
+                        key={`response-${run.id}-${item.id}`}
+                      >
+                        <div className="message-author">
+                          <span className="avatar agent-avatar">
+                            <Icon name="agent" />
+                          </span>
+                          <strong>Coding Agent</strong>
+                        </div>
+                        <p>{item.text}</p>
+                      </article>
+                    ),
                   )}
                   {run.error && (
                     <p className="error-message" role="alert">

@@ -12,6 +12,21 @@ describe("deterministic agent engine", () => {
 
     expect(events).toEqual([
       { version: 1, type: "agent.started" },
+      {
+        version: 1,
+        type: "tool.started",
+        id: "deterministic-read",
+        name: "read",
+        input: '{"path":"README.md"}',
+      },
+      {
+        version: 1,
+        type: "tool.completed",
+        id: "deterministic-read",
+        name: "read",
+        result: "# Pandi GUI",
+        isError: false,
+      },
       { version: 1, type: "message.delta", text: "Echo: " },
       { version: 1, type: "message.delta", text: "Hello" },
       { version: 1, type: "agent.settled" },

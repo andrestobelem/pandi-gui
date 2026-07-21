@@ -432,6 +432,101 @@ svg {
   border-radius: 0.95rem;
 }
 
+.tool-activity {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.9rem;
+  margin-left: 2.35rem;
+  background: #f1f2f6;
+  border: 1px solid #dfe2e9;
+  border-radius: 0.85rem;
+}
+
+.tool-activity-header,
+.tool-activity-header > span {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tool-activity-header {
+  justify-content: space-between;
+}
+
+.tool-activity-header > span:first-child {
+  min-width: 0;
+  color: #5f657a;
+}
+
+.tool-activity-header svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.tool-activity-header strong {
+  overflow: hidden;
+  font:
+    650 0.77rem / 1.3 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-activity-status {
+  flex: 0 0 auto;
+  color: #7b8091;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tool-activity.is-running .tool-activity-status {
+  color: #6754ba;
+}
+
+.tool-activity.is-failed {
+  background: #fff4f4;
+  border-color: #efd9dc;
+}
+
+.tool-activity.is-failed .tool-activity-status {
+  color: #a2454e;
+}
+
+.tool-activity-payload {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.tool-activity-payload > span {
+  color: #9297a8;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tool-activity-payload pre {
+  max-height: 14rem;
+  padding: 0.7rem 0.8rem;
+  margin: 0;
+  overflow: auto;
+  color: #555b70;
+  font:
+    0.72rem / 1.55 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: rgb(255 255 255 / 62%);
+  border: 1px solid #e1e3e9;
+  border-radius: 0.6rem;
+}
+
 .error-message {
   padding: 0.8rem 1rem;
   margin: 0;

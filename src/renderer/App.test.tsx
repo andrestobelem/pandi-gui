@@ -6,6 +6,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AgentHostEvent } from "../protocol/agent-protocol";
@@ -72,6 +73,119 @@ describe("Workspace Session", () => {
 
     expect(prompt).toHaveBeenCalledWith("Hello");
     expect(screen.getByText("Hi there")).toBeTruthy();
+  });
+
+  it("renders running and completed read Tool Activity", () => {
+    let receive: (event: AgentHostEvent) => void = () => {};
+    window.pandi = {
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Prompt"), {
+      target: { value: "Read README.md" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    act(() => {
+      receive({ version: 1, type: "agent.started" });
+      receive({
+        version: 1,
+        type: "message.delta",
+        text: "I'll inspect it.",
+      });
+      receive({
+        version: 1,
+        type: "tool.started",
+        id: "read-1",
+        name: "read",
+        input: '{"path":"README.md"}',
+      });
+    });
+
+    const runningActivity = screen.getByRole("article", {
+      name: "read Tool Activity",
+    });
+    expect(within(runningActivity).getByText("Running")).toBeTruthy();
+    expect(
+      within(runningActivity).getByText('{"path":"README.md"}'),
+    ).toBeTruthy();
+
+    act(() => {
+      receive({
+        version: 1,
+        type: "tool.completed",
+        id: "read-1",
+        name: "read",
+        result: "# Pandi GUI",
+        isError: false,
+      });
+      receive({ version: 1, type: "message.delta", text: "Read complete." });
+    });
+
+    const completedActivity = screen.getByRole("article", {
+      name: "read Tool Activity",
+    });
+    expect(within(completedActivity).getByText("Completed")).toBeTruthy();
+    expect(within(completedActivity).getByText("# Pandi GUI")).toBeTruthy();
+
+    const transcriptText =
+      screen.getByRole("region", { name: "Transcript" }).textContent ?? "";
+    expect(transcriptText.indexOf("I'll inspect it.")).toBeLessThan(
+      transcriptText.indexOf('{"path":"README.md"}'),
+    );
+    expect(transcriptText.indexOf("# Pandi GUI")).toBeLessThan(
+      transcriptText.indexOf("Read complete."),
+    );
+  });
+
+  it("renders failed read Tool Activity distinctly", () => {
+    let receive: (event: AgentHostEvent) => void = () => {};
+    window.pandi = {
+      prompt: vi.fn(),
+      abort: vi.fn(),
+      workspace: async () => ({ version: 1, name: "pandi-gui" }),
+      subscribe(listener) {
+        receive = listener;
+        return () => {};
+      },
+    };
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Prompt"), {
+      target: { value: "Read missing.md" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    act(() => {
+      receive({ version: 1, type: "agent.started" });
+      receive({
+        version: 1,
+        type: "tool.started",
+        id: "read-1",
+        name: "read",
+        input: '{"path":"missing.md"}',
+      });
+      receive({
+        version: 1,
+        type: "tool.completed",
+        id: "read-1",
+        name: "read",
+        result: "File not found",
+        isError: true,
+      });
+      receive({ version: 1, type: "agent.settled" });
+    });
+
+    const failedActivity = screen.getByRole("article", {
+      name: "read Tool Activity",
+    });
+    expect(within(failedActivity).getByText("Failed")).toBeTruthy();
+    expect(within(failedActivity).getByText("File not found")).toBeTruthy();
   });
 
   it("preserves every Run and scrolls to the latest Response", () => {

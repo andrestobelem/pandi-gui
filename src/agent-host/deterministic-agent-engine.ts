@@ -22,6 +22,24 @@ export class DeterministicAgentEngine implements AgentEngine {
     try {
       await wait(this.#delayMs, controller.signal);
       if (controller.signal.aborted) return;
+      this.#emit({
+        version: 1,
+        type: "tool.started",
+        id: "deterministic-read",
+        name: "read",
+        input: '{"path":"README.md"}',
+      });
+
+      await wait(this.#delayMs, controller.signal);
+      if (controller.signal.aborted) return;
+      this.#emit({
+        version: 1,
+        type: "tool.completed",
+        id: "deterministic-read",
+        name: "read",
+        result: "# Pandi GUI",
+        isError: false,
+      });
       this.#emit({ version: 1, type: "message.delta", text: "Echo: " });
 
       await wait(this.#delayMs, controller.signal);

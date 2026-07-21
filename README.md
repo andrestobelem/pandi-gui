@@ -53,7 +53,12 @@ It runs formatting/lint checks, type checking, deterministic tests and the depen
 
 GitHub Actions runs this command for pull requests and pushes to `main`, cancels superseded branch runs and uploads the candidate for 14 days. The current Continuous Delivery boundary ends at an unsigned macOS ARM64 candidate. Signing, notarization, multi-platform packages and release promotion require separate decisions and credentials; later stages must consume this candidate rather than rebuild it.
 
-A real-Pi smoke check remains manual: start the default application, submit `Reply exactly PANDI_SMOKE and do not use tools`, and observe `PANDI_SMOKE` in the transcript. This verifies the packaged renderer, preload, Electron IPC, utility process, Pi session and model stream together.
+Real-Pi smoke checks remain manual:
+
+1. Start the default application, submit `Reply exactly PANDI_SMOKE and do not use tools`, and observe `PANDI_SMOKE` in the Transcript.
+2. Submit `Use the read tool to read package.json, then tell me the package name.` Observe a `read` Tool Activity card transition from **Running** to **Completed**, with the requested path as input and file content as its result, followed by the Coding Agent Response.
+
+The real Pi Session exposes only the built-in `read` tool: extensions, bash and mutating tools remain disabled. These checks verify the packaged renderer, preload, Electron IPC, utility process, Pi Session, read execution and model stream together.
 
 ## Architecture
 
