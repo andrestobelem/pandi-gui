@@ -129,10 +129,13 @@ describe("Workspace Session", () => {
     };
     render(<App />);
 
-    fireEvent.change(screen.getByLabelText("Prompt"), {
+    const promptInput = screen.getByLabelText("Prompt");
+    fireEvent.change(promptInput, {
       target: { value: "Hello" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    fireEvent.keyDown(promptInput, { key: "Enter", shiftKey: true });
+    expect(prompt).not.toHaveBeenCalled();
+    fireEvent.keyDown(promptInput, { key: "Enter" });
     act(() => {
       receive({ version: 1, type: "agent.started" });
       receive({ version: 1, type: "message.delta", text: "Hi " });

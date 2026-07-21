@@ -1,4 +1,10 @@
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { TranscriptRun as RestoredRun } from "../protocol/agent-protocol";
 import "../protocol/pandi-api";
 
@@ -272,6 +278,19 @@ export function App() {
     transcriptEnd.current?.scrollIntoView({ block: "end" });
   }, [runs]);
 
+  function submitOnEnter(event: ReactKeyboardEvent<HTMLTextAreaElement>): void {
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey ||
+      event.nativeEvent.isComposing
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const prompt = input.trim();
@@ -460,6 +479,7 @@ export function App() {
             <textarea
               id="prompt"
               onChange={(event) => setInput(event.target.value)}
+              onKeyDown={submitOnEnter}
               placeholder="Ask Pandi to work in this Workspace…"
               rows={3}
               value={input}
